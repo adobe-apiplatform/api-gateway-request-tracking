@@ -48,14 +48,6 @@ function _M:new(o)
     return o
 end
 
-local function getUTCTimestamp(timestamp)
-    if ( timestamp == nil ) then
-        return os.time()
-    end
-    local local_tz_offset = os.time() - os.time(os.date("!*t"))
-    return tonumber(tonumber(timestamp) + local_tz_offset)
-
-end
 
 local function addSingleRule(rule)
     local rule_type = string.upper(rule.action)
@@ -71,8 +63,8 @@ local function addSingleRule(rule)
         return false
     end
 
-    local now = os.time()
-    local expire_in = getUTCTimestamp(rule.expire_at_utc) - now
+    local now = ngx.time()
+    local expire_in = rule.expire_at_utc - now
     if ( expire_in <= 0 ) then
         ngx.log(ngx.WARN, "Rule already expired, will expire it form the cache too. input=" ..tostring(json_string))
         dict:set( rule.format, "", 0.001, 0)
@@ -103,13 +95,12 @@ function _M:addRule( json_string )
 
     local rule = assert( cjson.decode(json_string), "Please provide a valid JSON-encoded string: " .. tostring(json_string) )
 
-    ngx.log(ngx.DEBUG, "ADDING:" .. tostring(json_string))
+    ngx.log(ngx.DEBUG, "Adding rules:" .. tostring(json_string))
 
     -- check to see if the rule(s) came as an array
     if ( rule[1] ~= nil ) then
         local success, err, forcible
         for i, single_rule in pairs(rule) do
-            ngx.log(ngx.DEBUG, "Adding rule " .. tostring(i))
             success, err, forcible = addSingleRule(single_rule)
             if ( success == false ) then
                 ngx.log(ngx.WARN, "Failed to save rule in cache. err=" .. tostring(err) ..  ". Rule:" .. tostring(cjson.encode(single_rule)))
@@ -127,6 +118,7 @@ end
 -- @param rule_type BLOCK, TRACK, DEBUG, DELAY or RETRY-AFTER
 --
 function _M:getRulesForType(rule_type)
+    local rule_type = string.upper(rule_type)
     local dict_name = KNWON_RULES[rule_type]
     if ( dict_name == nil ) then
         return {}
