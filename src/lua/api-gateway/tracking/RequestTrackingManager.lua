@@ -57,19 +57,8 @@ local function getUTCTimestamp(timestamp)
 
 end
 
---- Saves the new rule into the shared dictionary corresponding to the rule
--- @param json_string
---     {
---          "id": "778.v2",
---          "domain" : "cc-eco;ccstorage",
---          "format": "$publisher_org_name;$service_id",
---          "expire_at_utc": 1408065588999,
---          "action" : "block"
---      }
---
-function _M:addRule( json_string )
-    local rule = assert( cjson.decode(json_string), "Please provide a valid JSON-encoded string: " .. tostring(json_string) )
-    local rule_type = rule.action
+local function addSingleRule(rule)
+    local rule_type = string.upper(rule.action)
     if ( KNWON_RULES[rule_type] == nil ) then
         ngx.log(ngx.WARN, "Could not add rule as it doesn't match the known rules. input=" .. tostring(json_string) )
         return false
@@ -91,8 +80,46 @@ function _M:addRule( json_string )
     end
 
     -- TODO: make sure format doesn't have any spaces at all
-    dict:set(rule.format, rule.expire_at .. " " .. rule.domain, expire_in, rule.id)
+    local success, err, forcible = dict:set(rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, rule.id)
     dict:set("_lastModified", now, 0)
+    return success, err, forcible
+end
+
+--- Saves the new rule(s) into the shared dictionary corresponding to the action of the rule
+-- @param json_string
+--     [{
+--          "id": "778.v2",
+--          "domain" : "cc-eco;ccstorage",
+--          "format": "$publisher_org_name;$service_id",
+--          "expire_at_utc": 1408065588999,
+--          "action" : "block"
+--      }, {...} ]
+--
+function _M:addRule( json_string )
+    if ( json_string == nil ) then
+        ngx.log(ngx.WARN, "No json_string received")
+        return false
+    end
+
+    local rule = assert( cjson.decode(json_string), "Please provide a valid JSON-encoded string: " .. tostring(json_string) )
+
+    ngx.log(ngx.DEBUG, "ADDING:" .. tostring(json_string))
+
+    -- check to see if the rule(s) came as an array
+    if ( rule[1] ~= nil ) then
+        local success, err, forcible
+        for i, single_rule in pairs(rule) do
+            ngx.log(ngx.DEBUG, "Adding rule " .. tostring(i))
+            success, err, forcible = addSingleRule(single_rule)
+            if ( success == false ) then
+                ngx.log(ngx.WARN, "Failed to save rule in cache. err=" .. tostring(err) ..  ". Rule:" .. tostring(cjson.encode(single_rule)))
+            end
+        end
+        return success, err, forcible
+    end
+
+
+    return addSingleRule(rule)
 end
 
 --- Returns an object with the current active rules for the given rule_type
@@ -138,7 +165,7 @@ function _M:getRulesForType(rule_type)
                 format = key,
                 domain = val:sub(split_idx+1),
                 expire_at_utc = val:sub(1, split_idx-1),
-                action = dict_name
+                action = string.lower(rule_type)
             }
         end
     end

@@ -21,10 +21,13 @@ local function _API_POST_Handler()
     ngx.req.read_body()
     if ( ngx.req.get_method() == "POST" ) then
        local json_string = ngx.req.get_body_data()
-       local result = trackingManager:addRule(json_string)
-       if ( result ) then
+       local success, err, forcible = trackingManager:addRule(json_string)
+       if ( success ) then
+          ngx.say('{"result":"success"}')
           return ngx.OK
        end
+       ngx.log(ngx.WARN, "Error saving a new Rule. err=" .. tostring(err), ", forcible=" .. tostring(forcible))
+       return ngx.ngx.HTTP_BAD_REQUEST
     end
 end
 

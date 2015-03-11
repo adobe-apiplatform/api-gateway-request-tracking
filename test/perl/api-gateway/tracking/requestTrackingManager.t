@@ -7,9 +7,9 @@ use Cwd qw(cwd);
 #master_process_enabled(1);
 #log_level('warn');
 
-repeat_each(2);
+repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 4) + 14;
+plan tests => repeat_each() * (blocks() * 12);
 
 my $pwd = cwd();
 
@@ -50,6 +50,7 @@ __DATA__
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/tracking_service.conf;
+        error_log ../test-logs/requestTrackingManager_test1_error.log warn;
 --- more_headers
 X-Test: test
 --- request
@@ -61,13 +62,121 @@ GET /tracking/track
 [error]
 
 
+=== TEST 2: test that we can add new rules and persist them
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/tracking_service.conf;
+        error_log ../test-logs/requestTrackingManager_test2_error.log debug;
+--- pipelined_requests eval
+['POST /tracking/
+{
+  "id": 222,
+  "domain" : "cc-eco;comcast;*",
+  "format": "$publisher_org_name;$consumer_org_name;$api_key",
+  "expire_at_utc": 1583910454,
+  "action" : "track"
+}
+',
+'POST /tracking/
+{
+  "id": 223,
+  "domain" : "cc-eco;comcast",
+  "format": "$publisher_org_name;$consumer_org_name",
+  "expire_at_utc": 1583910454,
+  "action" : "block"
+}
+',
+"GET /tracking/track",
+"GET /tracking/block",
+'POST /tracking/
+{
+  "id": 333,
+  "domain" : "cc-eco;comcast;*",
+  "format": "$publisher_org_name;$consumer_org_name;$api_plan",
+  "expire_at_utc": 1583910454,
+  "action" : "track"
+}
+',
+"GET /tracking/track"]
+--- response_body eval
+[
+'{"result":"success"}
+',
+'{"result":"success"}
+',
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"}]
+',
+'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"block","expire_at_utc":"1583910454"}]
+',
+'{"result":"success"}
+',
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"track","expire_at_utc":"1583910454"}]
+'
+]
+--- error_code_like eval
+ [200, 200, 200, 200, 200, 200]
+--- no_error_log
+[error]
 
 
-#POST /tracking
-#{
-#  "id": 777,
-#  "domain" : "cc-eco;ccstorage;*",
-#  "format": "$publisher_org_name;$service_id;$api_key",
-#  "expire_at_utc": 1408065588203,
-#  "action" : "track"
-#}
+
+=== TEST 3: test that we can add a batch of rules at once
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/tracking_service.conf;
+        error_log ../test-logs/requestTrackingManager_test3_error.log debug;
+--- pipelined_requests eval
+['POST /tracking/
+[{
+  "id": 222,
+  "domain" : "cc-eco;comcast;*",
+  "format": "$publisher_org_name;$consumer_org_name;$api_key",
+  "expire_at_utc": 1583910454,
+  "action" : "track"
+},
+{
+  "id": 223,
+  "domain" : "cc-eco;comcast",
+  "format": "$publisher_org_name;$consumer_org_name",
+  "expire_at_utc": 1583910454,
+  "action" : "block"
+}]
+',
+"GET /tracking/track",
+"GET /tracking/block",
+'POST /tracking/
+[{
+  "id": 333,
+  "domain" : "cc-eco;comcast;*",
+  "format": "$publisher_org_name;$consumer_org_name;$api_plan",
+  "expire_at_utc": 1583910454,
+  "action" : "track"
+},{
+  "id": 444,
+  "domain" : "cc-eco;comcast;*",
+  "format": "$publisher_org_name;$consumer_org_name;$app_name",
+  "expire_at_utc": 1583910454,
+  "action" : "track"
+}
+]',
+"GET /tracking/track"]
+--- response_body eval
+[
+'{"result":"success"}
+',
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"}]
+',
+'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"block","expire_at_utc":"1583910454"}]
+',
+'{"result":"success"}
+',
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"track","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$app_name","id":444,"action":"track","expire_at_utc":"1583910454"}]
+'
+]
+--- error_code_like eval
+ [200, 200, 200, 200, 200, 200]
+--- no_error_log
+[error]
+
+
+
