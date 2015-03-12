@@ -246,6 +246,10 @@ GET /test-expiration
             set $block_5 '{"domain":"pub1;consumer5;","format":"!publisher_org_name;!consumer_org_name;","id":225,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
             set $block_6 '{"domain":"pub1;consumer6;","format":"!publisher_org_name;!consumer_org_name;","id":226,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
 
+            # track all consumers for pub1 publisher, but also track all consumers in general
+            set $track_1 '{"domain":"pub1;*;","format":"!publisher_org_name;!consumer_org_name;","id":321,"action":"TRACK","expire_at_utc":$generated_expires_at}';
+            set $track_2 '{"domain":"*;","format":"!consumer_org_name;","id":322,"action":"TRACK","expire_at_utc":$generated_expires_at}';
+
             set $consumer_org_name consumer6;
 
             content_by_lua '
@@ -257,14 +261,28 @@ GET /test-expiration
                 trackingManager:addRule(ngx.re.gsub(ngx.var.block_5,"!", "$$", "jo"))
                 trackingManager:addRule(ngx.re.gsub(ngx.var.block_6,"!", "$$", "jo"))
                 trackingManager:addRule(ngx.re.gsub(ngx.var.block_7,"!", "$$", "jo"))
+
+                trackingManager:addRule(ngx.re.gsub(ngx.var.track_1,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.track_2,"!", "$$", "jo"))
+
                 local blocking_rules = trackingManager:getMatchingRulesForRequest("block",";", true)
-
-
                 assert( blocking_rules ~= nil, "At least one blocking rule should exists. " )
                 assert( blocking_rules["id"] == 226, "Blocking rule 226 should be matched. Found: ", blocking_rules["id"])
+
+                local stop_after_first_match = false
+                local tracking_rules = trackingManager:getMatchingRulesForRequest("track", ";", stop_after_first_match)
+                local n = table.getn(tracking_rules)
+                assert( n == 2, "TWO tracking rules should have matched on this request. Found:" .. tostring(n))
+                assert( tracking_rules[1].domain == "pub1;consumer6;", "Wrong domain value. Expected: pub1;consumer6;  Found:" .. tracking_rules[1].domain )
+                assert( tracking_rules[2].domain == "consumer6;", "Wrong domain value. Expected: consumer6;  Found:" .. tracking_rules[2].domain )
+
                 ngx.sleep(1.5)
                 blocking_rules = trackingManager:getMatchingRulesForRequest("block")
                 assert( blocking_rules == nil, "Blocking rule should have expired." )
+
+                tracking_rules = trackingManager:getMatchingRulesForRequest("track", ";", stop_after_first_match)
+                assert( blocking_rules == nil, "Tracking rules should have expired." )
+
                 ngx.say("OK")
             ';
         }
