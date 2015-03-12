@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 10) - 1;
+plan tests => repeat_each() * (blocks() * 9) - 3 ;
 
 my $pwd = cwd();
 
@@ -258,11 +258,13 @@ GET /test-expiration
                 trackingManager:addRule(ngx.re.gsub(ngx.var.block_6,"!", "$$", "jo"))
                 trackingManager:addRule(ngx.re.gsub(ngx.var.block_7,"!", "$$", "jo"))
                 local blocking_rules = trackingManager:getMatchingRulesForRequest("block",";", true)
-                assert( table.getn(blocking_rules) == 1, "ONE blocking rule should exists")
-                assert( blocking_rules[1]["id"] == 227, "Blocking rule 227 should be matched")
+
+
+                assert( blocking_rules ~= nil, "At least one blocking rule should exists. " )
+                assert( blocking_rules["id"] == 226, "Blocking rule 226 should be matched. Found: ", blocking_rules["id"])
                 ngx.sleep(1.5)
                 blocking_rules = trackingManager:getMatchingRulesForRequest("block")
-                assert( table.getn(blocking_rules) == 0, "Blocking rules should expire")
+                assert( blocking_rules == nil, "Blocking rule should have expired." )
                 ngx.say("OK")
             ';
         }

@@ -77,7 +77,7 @@ local function addSingleRule(rule)
     end
 
     -- TODO: make sure format doesn't have any spaces at all
-    local success, err, forcible = dict:set(rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, rule.id)
+    local success, err, forcible = dict:set(rule.id .. " " .. rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, rule.id)
     dict:set("_lastModified", now, 0)
     return success, err, forcible
 end
@@ -149,14 +149,15 @@ function _M:getRulesForType(rule_type)
     cached_rules[rule_type] = {}
     local keys = dict:get_keys()
     local val, id, domain, expire_at_utc
-    local split_idx, i
+    local split_idx, i, format_split_idx
     for i, key in pairs(keys) do
         if (key ~= "_lastModified") then
             val, id = dict:get(key)
             split_idx = val:find(" ")
+            format_split_idx = key:find(" ")
             cached_rules[rule_type][i] = {
                 id = id,
-                format = key,
+                format = key:sub(format_split_idx + 1),
                 domain = val:sub(split_idx + 1),
                 expire_at_utc = val:sub(1, split_idx - 1),
                 action = string.upper(rule_type)
@@ -328,6 +329,9 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                 end
             end
         end
+    end
+    if ( next(matched_rules) == nil ) then
+        return nil
     end
     return matched_rules
 end
