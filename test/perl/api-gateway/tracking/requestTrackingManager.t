@@ -248,7 +248,7 @@ GET /test-expiration
 
             # track all consumers for pub1 publisher, but also track all consumers in general
             set $track_1 '{"domain":"pub1;*;","format":"!publisher_org_name;!consumer_org_name;","id":321,"action":"TRACK","expire_at_utc":$generated_expires_at}';
-            set $track_2 '{"domain":"*;","format":"!consumer_org_name;","id":322,"action":"TRACK","expire_at_utc":$generated_expires_at}';
+            set $track_2 '{"domain":"*","format":"!consumer_org_name","id":322,"action":"TRACK","expire_at_utc":$generated_expires_at}';
 
             set $consumer_org_name consumer6;
 
