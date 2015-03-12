@@ -74,7 +74,7 @@ GET /tracking/track
   "domain" : "cc-eco;comcast;*",
   "format": "$publisher_org_name;$consumer_org_name;$api_key",
   "expire_at_utc": 1583910454,
-  "action" : "track"
+  "action" : "TRACK"
 }
 ',
 'POST /tracking/
@@ -83,7 +83,7 @@ GET /tracking/track
   "domain" : "cc-eco;comcast",
   "format": "$publisher_org_name;$consumer_org_name",
   "expire_at_utc": 1583910454,
-  "action" : "block"
+  "action" : "BLOCK"
 }
 ',
 "GET /tracking/track",
@@ -94,7 +94,7 @@ GET /tracking/track
   "domain" : "cc-eco;comcast;*",
   "format": "$publisher_org_name;$consumer_org_name;$api_plan",
   "expire_at_utc": 1583910454,
-  "action" : "track"
+  "action" : "TRACK"
 }
 ',
 "GET /tracking/track"]
@@ -104,13 +104,13 @@ GET /tracking/track
 ',
 '{"result":"success"}
 ',
-'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"}]
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"TRACK","expire_at_utc":"1583910454"}]
 ',
-'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"block","expire_at_utc":"1583910454"}]
+'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"BLOCK","expire_at_utc":"1583910454"}]
 ',
 '{"result":"success"}
 ',
-'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"track","expire_at_utc":"1583910454"}]
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"TRACK","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"TRACK","expire_at_utc":"1583910454"}]
 '
 ]
 --- error_code_like eval
@@ -132,14 +132,14 @@ GET /tracking/track
   "domain" : "cc-eco;comcast;*",
   "format": "$publisher_org_name;$consumer_org_name;$api_key",
   "expire_at_utc": 1583910454,
-  "action" : "track"
+  "action" : "TRACK"
 },
 {
   "id": 223,
   "domain" : "cc-eco;comcast",
   "format": "$publisher_org_name;$consumer_org_name",
   "expire_at_utc": 1583910454,
-  "action" : "block"
+  "action" : "BLOCK"
 }]
 ',
 "GET /tracking/track",
@@ -150,13 +150,13 @@ GET /tracking/track
   "domain" : "cc-eco;comcast;*",
   "format": "$publisher_org_name;$consumer_org_name;$api_plan",
   "expire_at_utc": 1583910454,
-  "action" : "track"
+  "action" : "TRACK"
 },{
   "id": 444,
   "domain" : "cc-eco;comcast;*",
   "format": "$publisher_org_name;$consumer_org_name;$app_name",
   "expire_at_utc": 1583910454,
-  "action" : "track"
+  "action" : "TRACK"
 }
 ]',
 "GET /tracking/track"]
@@ -164,13 +164,13 @@ GET /tracking/track
 [
 '{"result":"success"}
 ',
-'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"}]
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"TRACK","expire_at_utc":"1583910454"}]
 ',
-'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"block","expire_at_utc":"1583910454"}]
+'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"BLOCK","expire_at_utc":"1583910454"}]
 ',
 '{"result":"success"}
 ',
-'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"track","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"track","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$app_name","id":444,"action":"track","expire_at_utc":"1583910454"}]
+'[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"TRACK","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"TRACK","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$app_name","id":444,"action":"TRACK","expire_at_utc":"1583910454"}]
 '
 ]
 --- error_code_like eval
@@ -199,7 +199,7 @@ GET /tracking/track
                         -- expire in 1 second
                         return ( ngx.time() + 1 )
             ';
-            set $block_1 '{"domain":"cc-eco;comcast","format":"publisher_org_name;consumer_org_name","id":223,"action":"block","expire_at_utc":$generated_expires_at}';
+            set $block_1 '{"domain":"cc-eco;comcast","format":"publisher_org_name;consumer_org_name","id":223,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
             content_by_lua '
                 local trackingManager = ngx.apiGateway.tracking.manager
                 trackingManager:addRule(ngx.var.block_1)
@@ -221,6 +221,62 @@ GET /test-expiration
 --- error_code: 200
 --- no_error_log
 [error]
+
+
+
+=== TEST 5: test that rules match request variables
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/tracking_service.conf;
+        error_log ../test-logs/requestTrackingManager_test5_error.log debug;
+
+        set $publisher_org_name pub1;
+
+        location /test-request-match {
+            set_by_lua $generated_expires_at '
+                        -- NOTE: assumption is that ngx.now() and ngx.time() is UTC
+                        -- expire in 1 second
+                        return ( ngx.time() + 1 )
+            ';
+            set $block_1 '{"domain":"pub1;consumer8;","format":"!publisher_org_name;!consumer_org_name;","id":221,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+            set $block_2 '{"domain":"pub1;consumer2;","format":"!publisher_org_name;!consumer_org_name;","id":222,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+            set $block_3 '{"domain":"pub1;consumer3;","format":"!publisher_org_name;!consumer_org_name;","id":223,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+            set $block_7 '{"domain":"pub1;consumer1;","format":"!publisher_org_name;!consumer_org_name;","id":227,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+            set $block_4 '{"domain":"pub1;consumer4;","format":"!publisher_org_name;!consumer_org_name;","id":224,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+            set $block_5 '{"domain":"pub1;consumer5;","format":"!publisher_org_name;!consumer_org_name;","id":225,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+            set $block_6 '{"domain":"pub1;consumer6;","format":"!publisher_org_name;!consumer_org_name;","id":226,"action":"BLOCK","expire_at_utc":$generated_expires_at}';
+
+            set $consumer_org_name consumer6;
+
+            content_by_lua '
+                local trackingManager = ngx.apiGateway.tracking.manager
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_1,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_2,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_3,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_4,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_5,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_6,"!", "$$", "jo"))
+                trackingManager:addRule(ngx.re.gsub(ngx.var.block_7,"!", "$$", "jo"))
+                local blocking_rules = trackingManager:getMatchingRulesForRequest("block",";", true)
+                assert( table.getn(blocking_rules) == 1, "ONE blocking rule should exists")
+                assert( blocking_rules[1]["id"] == 227, "Blocking rule 227 should be matched")
+                ngx.sleep(1.5)
+                blocking_rules = trackingManager:getMatchingRulesForRequest("block")
+                assert( table.getn(blocking_rules) == 0, "Blocking rules should expire")
+                ngx.say("OK")
+            ';
+        }
+--- more_headers
+X-Test: test
+--- request
+GET /test-request-match
+--- response_body eval
+["OK\n"]
+--- error_code: 200
+--- no_error_log
+[error]
+
+
 
 
 
