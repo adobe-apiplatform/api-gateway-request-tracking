@@ -12,6 +12,7 @@
 --
 
 local RequestTrackingManager = require "api-gateway.tracking.RequestTrackingManager"
+local BlockingRulesValidator = require "api-gateway.tracking.validator.blockingRulesValidator"
 local cjson = require "cjson"
 
 --- Handler for REST API:
@@ -44,8 +45,16 @@ local function _API_GET_Handler(rule_type)
     ngx.status = ngx.HTTP_BAD_REQUEST
 end
 
+--- Validates the request to see if there's any Blocking rule matching. If yes, it blocks the request
+--
+local function _validateServicePlan()
+    local blockingRulesValidator = BlockingRulesValidator:new()
+    return blockingRulesValidator:validateRequest()
+end
+
 return {
     manager = RequestTrackingManager:new(),
+    validateServicePlan = _validateServicePlan,
     POST_HANDLER = _API_POST_Handler,
     GET_HANDLER = _API_GET_Handler
 }
