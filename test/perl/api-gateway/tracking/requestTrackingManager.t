@@ -281,7 +281,7 @@ GET /test-expiration
                 assert( blocking_rules == nil, "Blocking rule should have expired." )
 
                 tracking_rules = trackingManager:getMatchingRulesForRequest("track", ";", stop_after_first_match)
-                assert( blocking_rules == nil, "Tracking rules should have expired." )
+                assert( tracking_rules == nil, "Tracking rules should have expired." )
 
                 ngx.say("OK")
             ';

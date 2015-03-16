@@ -221,11 +221,11 @@ local function matchVarsWithDomains(vars, domains, cache, separator)
     ngx.log(ngx.DEBUG, "Comparing ", vars_length , " vars with ", domains_length, " domains.")
     local v, d, i
     for i = 1, domains_length do
-        ngx.log(ngx.DEBUG, "VAR " , tostring(i))
+        -- ngx.log(ngx.DEBUG, "VAR " , tostring(i))
         v = getRequestVariable(vars[i], cache)
-        ngx.log(ngx.DEBUG, "VAL=", v)
+        -- ngx.log(ngx.DEBUG, "VAL=", v)
         d = domains[i]
-        ngx.log(ngx.DEBUG, "DOMAIN=", d)
+        -- ngx.log(ngx.DEBUG, "DOMAIN=", d)
         if (d == "*") then
             str = str .. v .. separator
         else

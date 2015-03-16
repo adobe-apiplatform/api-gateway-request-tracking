@@ -13,6 +13,7 @@
 
 local RequestTrackingManager = require "api-gateway.tracking.RequestTrackingManager"
 local BlockingRulesValidator = require "api-gateway.tracking.validator.blockingRulesValidator"
+local TrackingRulesLogger    = require "api-gateway.tracking.log.trackingRulesLogger"
 local cjson = require "cjson"
 
 --- Handler for REST API:
@@ -52,9 +53,18 @@ local function _validateServicePlan()
     return blockingRulesValidator:validateRequest()
 end
 
+--- Track the rules that are active, sending an async message to a queue with the usage
+-- This method should be called from the log phase ( log_by_lua )
+--
+local function _trackRequest()
+   local trackingRulesLogger = TrackingRulesLogger:new()
+    return trackingRulesLogger:log()
+end
+
 return {
     manager = RequestTrackingManager:new(),
     validateServicePlan = _validateServicePlan,
+    track = _trackRequest,
     POST_HANDLER = _API_POST_Handler,
     GET_HANDLER = _API_GET_Handler
 }
