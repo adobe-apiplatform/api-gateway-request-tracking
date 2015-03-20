@@ -72,7 +72,7 @@ local function addSingleRule(rule)
     local expire_in = rule.expire_at_utc - now
     if (expire_in <= 0) then
         ngx.log(ngx.WARN, "Rule already expired, will expire it form the cache too. input=" .. tostring(json_string))
-        dict:set(rule.format, "", 0.001, 0)
+        dict:set(rule.id .. " " .. rule.format, "", 0.001, 0)
         return false
     end
 
