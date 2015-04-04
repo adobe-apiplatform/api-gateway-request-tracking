@@ -54,7 +54,7 @@ function _M:new(o)
 end
 
 
-local function addSingleRule(rule)
+local function addSingleRule(rule, json_string)
     local rule_type = string.upper(rule.action)
     if (KNWON_RULES[rule_type] == nil) then
         ngx.log(ngx.WARN, "Could not add rule as it doesn't match the known rules. input=" .. tostring(json_string))
@@ -68,7 +68,7 @@ local function addSingleRule(rule)
         return false
     end
 
-    local now = ngx.time()
+    local now = ngx.now() -- floating-point number for the elapsed time in seconds (including milliseconds as the decimal part)
     local expire_in = rule.expire_at_utc - now
     if (expire_in <= 0) then
         ngx.log(ngx.WARN, "Rule already expired, will expire it form the cache too. input=" .. tostring(json_string))
@@ -78,6 +78,7 @@ local function addSingleRule(rule)
 
     -- TODO: make sure format doesn't have any spaces at all
     local success, err, forcible = dict:set(rule.id .. " " .. rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, rule.id)
+    ngx.log(ngx.WARN, "New blocking rule added. Expires in:" .. tostring(expire_in) .. ", Rule:" .. tostring(json_string))
     dict:set("_lastModified", now, 0)
     return success, err, forcible
 end
@@ -115,7 +116,7 @@ function _M:addRule(json_string)
     end
 
 
-    return addSingleRule(rule)
+    return addSingleRule(rule, json_string)
 end
 
 --- Returns an object with the current active rules for the given rule_type
