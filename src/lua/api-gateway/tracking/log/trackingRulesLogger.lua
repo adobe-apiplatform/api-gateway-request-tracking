@@ -29,7 +29,7 @@ function _M:sendMessage(message)
 end
 
 function _M:getZMQMessage(rule)
-    local timestamp = ngx.time()
+    local timestamp = ngx.now() -- floating-point number for the elapsed time in seconds (including milliseconds as the decimal part)
     local message = tostring(timestamp) .. " " .. tostring(rule.id) .. ";" .. tostring(rule.domain)
     return message
 end

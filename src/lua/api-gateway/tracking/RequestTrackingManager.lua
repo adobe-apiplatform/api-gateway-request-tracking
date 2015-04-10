@@ -107,7 +107,7 @@ function _M:addRule(json_string)
     if (rule[1] ~= nil) then
         local success, err, forcible
         for i, single_rule in pairs(rule) do
-            success, err, forcible = addSingleRule(single_rule)
+            success, err, forcible = addSingleRule(single_rule, json_string)
             if (success == false) then
                 ngx.log(ngx.WARN, "Failed to save rule in cache. err=" .. tostring(err) .. ". Rule:" .. tostring(cjson.encode(single_rule)))
             end
@@ -152,17 +152,21 @@ function _M:getRulesForType(rule_type)
     local val, id, domain, expire_at_utc
     local split_idx, i, format_split_idx
     for i, key in pairs(keys) do
-        if (key ~= "_lastModified") then
-            val, id = dict:get(key)
+        val, id = dict:get(key)
+        if (val ~= nil and key ~= "_lastModified") then
             split_idx = val:find(" ")
             format_split_idx = key:find(" ")
-            cached_rules[rule_type][i] = {
-                id = id,
-                format = key:sub(format_split_idx + 1),
-                domain = val:sub(split_idx + 1),
-                expire_at_utc = val:sub(1, split_idx - 1),
-                action = string.upper(rule_type)
-            }
+            if ( split_idx ~= nil and format_split_idx ~= nil ) then
+                cached_rules[rule_type][i] = {
+                    id = id,
+                    format = key:sub(format_split_idx + 1),
+                    domain = val:sub(split_idx + 1),
+                    expire_at_utc = val:sub(1, split_idx - 1),
+                    action = string.upper(rule_type)
+                }
+            else
+                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(key), " with val:", tostring(val))
+            end
         end
     end
     return cached_rules[rule_type]
@@ -299,7 +303,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
             local iterator, err = ngx.re.gmatch(domain, "(?<domains>[^;]+)" .. format_separator .. "?", "jo")
 
             if (not iterator) then
-                ngx.log(ngx.DEBUG, "Could not extract domain values for : [", tostring(domain), "]. Error:", tostring(err))
+                ngx.log(ngx.WARN, "Could not extract domain values for : [", tostring(domain), "]. Error:", tostring(err))
             else
                 matched_domains = extractMatchedItemsFromIterator(iterator, "domains")
                 --[[                for k, v in pairs(matched_domains) do
@@ -308,7 +312,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
 
                 local iterator, err = ngx.re.gmatch(format, "\\$(?<vars>\\w+).?", "jo")
                 if (not iterator) then
-                    ngx.log(ngx.DEBUG, "Could not extract format variables for : [", tostring(format), "]. Error:", tostring(err), ", match table=", tostring(matched_variables))
+                    ngx.log(ngx.WARN, "Could not extract format variables for : [", tostring(format), "]. Error:", tostring(err), ", match table=", tostring(matched_variables))
                 else
                     matched_variables = extractMatchedItemsFromIterator(iterator, "vars")
                     --[[for k, v in pairs(matched_variables) do
