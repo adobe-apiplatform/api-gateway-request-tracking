@@ -39,7 +39,7 @@ redis: all
 	cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make
 
 package:
-	git archive --format=tar --prefix=api-gateway-request-tracking-1.0/ -o api-gateway-request-tracking-1.0.tar.gz -v HEAD
+	git archive --format=tar --prefix=api-gateway-request-tracking-0.8/ -o api-gateway-request-tracking-0.8.tar.gz -v HEAD
 
 clean: all
 	rm -rf $(BUILD_DIR)
