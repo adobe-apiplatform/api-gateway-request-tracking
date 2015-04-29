@@ -56,6 +56,10 @@ __DATA__
 
         error_log ../test-logs/blockingRequestValidator_test1_error.log debug;
 
+        set $validator_custom_error_responses '{
+            "BLOCK_REQUEST" : { "http_status" : 429, "error_code" : 429050, "message" : "{\\"error_code\\":\\"429050\\",\\"message\\":\\"Too many requests\\"}","headers" :  { "content-type" : "application/json" } }
+        }';
+
         location ~ /protected-with-blocking-rules/(.*)$ {
             set $subpath $1;
             set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
@@ -93,15 +97,13 @@ __DATA__
 '[{"domain":"pub1;subpath-to-block","format":"$publisher_org_name;$subpath","id":222,"action":"BLOCK","expire_at_utc":"1583910454"},{"domain":"pub1;subpath-to-block-2","format":"$publisher_org_name;$subpath","id":223,"action":"BLOCK","expire_at_utc":"1583910454"}]
 ',
 '{"error_code":"429050","message":"Too many requests"}
-
 ',
 '{"error_code":"429050","message":"Too many requests"}
-
 ',
 'not-blocked
 '
 ]
---- error_code_like eval
+--- error_code eval
  [200, 200, 429, 429, 200]
 --- no_error_log
 [error]

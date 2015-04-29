@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 15) ;
+plan tests => repeat_each() * (blocks() * 15) + 3 ;
 
 my $pwd = cwd();
 
@@ -79,7 +79,8 @@ __DATA__
   "domain" : "pub1;subpath-to-delay-2",
   "format": "$publisher_org_name;$subpath",
   "expire_at_utc": 1583910454,
-  "action" : "DELAY"
+  "action" : "DELAY",
+  "data" : 9
 }]
 ',
 "GET /tracking/delay",
@@ -90,7 +91,7 @@ __DATA__
 --- response_body_like eval
 [
 '\{"result":"success"\}.*',
-'.*{"domain":"pub1;subpath-to-delay","format":"\$publisher_org_name;\$subpath","id":222,"action":"DELAY","expire_at_utc":"1583910454"},{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","id":223,"action":"DELAY","expire_at_utc":"1583910454"}.*',
+'.*{"domain":"pub1;subpath-to-delay","format":"\$publisher_org_name;\$subpath","id":222,"action":"DELAY","expire_at_utc":"1583910454"},{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":"1583910454"}.*',
 '(\d{2,4})+',
 '(\d{2,4})+',
 "0
@@ -98,6 +99,67 @@ __DATA__
 ]
 --- error_code_like eval
  [200, 200, 200, 200, 200]
+--- no_error_log
+[error]
+
+
+
+=== TEST 1: test that blockingn rules apply first
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/default_validators.conf;
+        include ../../api-gateway/tracking_service.conf;
+        set $publisher_org_name 'pub1';
+
+        error_log ../test-logs/delayingRequestValidator_test1_error.log debug;
+
+        location ~ /protected-with-delaying-rules/(.*)$ {
+            set $subpath $1;
+            set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
+
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua 'ngx.say(ngx.var.validate_request_response_time)';
+
+        }
+--- timeout: 10
+--- pipelined_requests eval
+['POST /tracking/
+[{
+  "id": 222,
+  "domain" : "pub1;subpath-to-block",
+  "format": "$publisher_org_name;$subpath",
+  "expire_at_utc": 1583910454,
+  "action" : "BLOCK"
+},
+{
+  "id": 223,
+  "domain" : "pub1;subpath-to-delay-2",
+  "format": "$publisher_org_name;$subpath",
+  "expire_at_utc": 1583910454,
+  "action" : "DELAY",
+  "data" : 9
+}]
+',
+"GET /tracking/delay",
+"GET /tracking/block",
+"GET /protected-with-delaying-rules/subpath-to-block",
+"GET /protected-with-delaying-rules/subpath-to-delay-2",
+"GET /protected-with-delaying-rules/valid-path/and-subpath"
+]
+--- response_body_like eval
+[
+'\{"result":"success"\}.*',
+'.*{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":"1583910454"}.*',
+'.*{"domain":"pub1;subpath-to-block","format":"\$publisher_org_name;\$subpath","id":222,"action":"BLOCK","expire_at_utc":"1583910454"}.*',
+'{"error_code":"429050","message":"Too many requests"}
+
+',
+'(\d{2,4})+',
+"0
+"
+]
+--- error_code eval
+ [200, 200, 200, 429050, 200, 200]
 --- no_error_log
 [error]
 

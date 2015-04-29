@@ -56,7 +56,7 @@ local function _validateServicePlan()
         return result
     end
     local delayingRulesValidator = DelayingRulesValidator:new()
-    return delayingRulesValidator:validateRequestForDelaying()
+    return delayingRulesValidator:validateRequest()
 end
 
 --- Track the rules that are active, sending an async message to a queue with the usage

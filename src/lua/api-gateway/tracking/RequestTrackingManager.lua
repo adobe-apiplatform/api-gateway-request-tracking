@@ -77,7 +77,7 @@ local function addSingleRule(rule, json_string)
     end
 
     -- TODO: make sure format doesn't have any spaces at all
-    local success, err, forcible = dict:set(rule.id .. " " .. rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, rule.id)
+    local success, err, forcible = dict:set(rule.id .. " " .. rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, (rule.data or 0) )
     ngx.log(ngx.WARN, "New blocking rule added at:" .. tostring(ngx.var.msec) .. ", expires in:" .. tostring(expire_in) .. ", Rule:" .. tostring(json_string))
     dict:set("_lastModified", now, 0)
     return success, err, forcible
@@ -90,7 +90,8 @@ end
 -- "domain" : "cc-eco;ccstorage",
 -- "format": "$publisher_org_name;$service_id",
 -- "expire_at_utc": 1408065588999,
--- "action" : "block"
+-- "action" : "block",
+-- "data" : 100
 -- }, {...} ]
 --
 function _M:addRule(json_string)
@@ -149,20 +150,22 @@ function _M:getRulesForType(rule_type)
     -- wil return a max os 1024 keys
     cached_rules[rule_type] = {}
     local keys = dict:get_keys()
-    local val, id, domain, expire_at_utc
+    local val, data, domain, expire_at_utc, id
     local split_idx, i, format_split_idx
     for i, key in pairs(keys) do
-        val, id = dict:get(key)
+        val, data = dict:get(key)
         if (val ~= nil and key ~= "_lastModified") then
             split_idx = val:find(" ")
             format_split_idx = key:find(" ")
             if ( split_idx ~= nil and format_split_idx ~= nil ) then
+                id = key:sub(1, format_split_idx - 1)
                 cached_rules[rule_type][i] = {
-                    id = id,
-                    format = key:sub(format_split_idx + 1),
-                    domain = val:sub(split_idx + 1),
-                    expire_at_utc = val:sub(1, split_idx - 1),
-                    action = string.upper(rule_type)
+                    id              = tonumber(id) or id, -- try to convert it to a number, but if it's not the keep string
+                    format          = key:sub(format_split_idx + 1),
+                    domain          = val:sub(split_idx + 1),
+                    expire_at_utc   = val:sub(1, split_idx - 1),
+                    action          = string.upper(rule_type),
+                    data            = data
                 }
             else
                 ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(key), " with val:", tostring(val))
@@ -282,7 +285,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
     ngx.log(ngx.DEBUG, "Getting matching rules for:", rule_type, ", separator=", format_separator, " exit_on_first_match=", tostring(fail_fast))
     local active_rules = self:getRulesForType(rule_type)
 
-    local format, domain, expire_at_utc, action, id, match_success, compiled_domain
+    local format, domain, expire_at_utc, action, id, data, match_success, compiled_domain
     local matched_variables, matched_domains, err
     local matched_rules_counter = 0
     local matched_rules = {}
@@ -294,6 +297,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
         domain = rule.domain
         action = rule.action
         expire_at_utc = rule.expire_at_utc
+        data = rule.data
         ngx.log(ngx.DEBUG, "... matching format=", tostring(format), " domain=", tostring(domain), " id=", tostring(id))
         if (format ~= nil and domain ~= nil and action ~= nil and expire_at_utc ~= nil and id ~= nil) then
             -- j - enable PCRE JIT compilation
@@ -325,7 +329,8 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                         matched_rules[matched_rules_counter] = {
                             id = id,
                             format = format,
-                            domain = compiled_domain
+                            domain = compiled_domain,
+                            data = data
                         }
                         if fail_fast == true then
                             return matched_rules[matched_rules_counter]
