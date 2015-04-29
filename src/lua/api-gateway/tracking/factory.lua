@@ -28,7 +28,7 @@ local function _API_POST_Handler()
           ngx.say('{"result":"success"}')
           return ngx.OK
        end
-       ngx.log(ngx.WARN, "Error saving a new Rule. err=" .. tostring(err), ", forcible=" .. tostring(forcible))
+       ngx.log(ngx.WARN, "Error saving a new Rule:" .. tostring(json_string) .. ".Reason: err=" .. tostring(err), ", forcible=" .. tostring(forcible))
        return ngx.HTTP_BAD_REQUEST
     end
 end
