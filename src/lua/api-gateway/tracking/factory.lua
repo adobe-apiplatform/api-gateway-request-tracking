@@ -13,6 +13,7 @@
 
 local RequestTrackingManager = require "api-gateway.tracking.RequestTrackingManager"
 local BlockingRulesValidator = require "api-gateway.tracking.validator.blockingRulesValidator"
+local DelayingRulesValidator = require "api-gateway.tracking.validator.delayingRulesValidator"
 local TrackingRulesLogger    = require "api-gateway.tracking.log.trackingRulesLogger"
 local cjson = require "cjson"
 
@@ -50,7 +51,12 @@ end
 --
 local function _validateServicePlan()
     local blockingRulesValidator = BlockingRulesValidator:new()
-    return blockingRulesValidator:validateRequest()
+    local result, status = blockingRulesValidator:validateRequest()
+    if(status == false) then
+        return result
+    end
+    local delayingRulesValidator = DelayingRulesValidator:new()
+    return delayingRulesValidator:validateRequest()
 end
 
 --- Track the rules that are active, sending an async message to a queue with the usage

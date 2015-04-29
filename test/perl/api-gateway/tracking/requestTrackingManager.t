@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 9) - 3 ;
+plan tests => repeat_each() * (blocks() * 9) + 3 ;
 
 my $pwd = cwd();
 
@@ -86,8 +86,19 @@ GET /tracking/track
   "action" : "BLOCK"
 }
 ',
+'POST /tracking/
+{
+  "id": 223,
+  "domain" : "cc-eco;comcast",
+  "format": "$publisher_org_name;$consumer_org_name",
+  "expire_at_utc": 1583910454,
+  "action" : "DELAY",
+  "data" : 123
+}
+',
 "GET /tracking/track",
 "GET /tracking/block",
+"GET /tracking/delay",
 'POST /tracking/
 {
   "id": 333,
@@ -104,17 +115,21 @@ GET /tracking/track
 ',
 '{"result":"success"}
 ',
+'{"result":"success"}
+',
 '[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"TRACK","expire_at_utc":"1583910454"}]
 ',
 '[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","id":223,"action":"BLOCK","expire_at_utc":"1583910454"}]
+',
+'[{"domain":"cc-eco;comcast","format":"$publisher_org_name;$consumer_org_name","data":123,"id":223,"action":"DELAY","expire_at_utc":"1583910454"}]
 ',
 '{"result":"success"}
 ',
 '[{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_key","id":222,"action":"TRACK","expire_at_utc":"1583910454"},{"domain":"cc-eco;comcast;*","format":"$publisher_org_name;$consumer_org_name;$api_plan","id":333,"action":"TRACK","expire_at_utc":"1583910454"}]
 '
 ]
---- error_code_like eval
- [200, 200, 200, 200, 200, 200]
+--- error_code eval
+ [200, 200, 200, 200, 200, 200, 200, 200]
 --- no_error_log
 [error]
 
