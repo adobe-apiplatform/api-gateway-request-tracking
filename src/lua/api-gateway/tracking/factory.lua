@@ -44,16 +44,16 @@ local function _API_GET_Handler(rule_type)
         ngx.say( cjson.encode(rules) )
         return ngx.OK
     end
-    ngx.status = ngx.HTTP_BAD_REQUEST
+    return ngx.HTTP_BAD_REQUEST
 end
 
 --- Validates the request to see if there's any Blocking rule matching. If yes, it blocks the request
 --
 local function _validateServicePlan()
     local blockingRulesValidator = BlockingRulesValidator:new()
-    local result, status = blockingRulesValidator:validateRequest()
-    if(status == false) then
-        return result
+    local http_code, http_body = blockingRulesValidator:validate_blocking_rules()
+    if(http_code ~= ngx.HTTP_OK) then
+        return blockingRulesValidator:exitFn(http_code, http_body)
     end
     local delayingRulesValidator = DelayingRulesValidator:new()
     return delayingRulesValidator:validateRequest()

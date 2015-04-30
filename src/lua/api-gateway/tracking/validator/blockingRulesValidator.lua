@@ -25,8 +25,7 @@ local _M = BaseValidator:new()
 
 ---
 -- @param config_obj configuration object
--- returns a tuple of 2 objects. first is the actual http response of the validator
---   and the second is the status of the validation ( true or false ). When false, the validator failed.
+-- returns a tuple of 2 objects: < http status code , http response >
 --
 function _M:validate_blocking_rules(config_obj)
     local trackingManager = ngx.apiGateway.tracking.manager
@@ -37,14 +36,14 @@ function _M:validate_blocking_rules(config_obj)
     local stop_at_first_block_match = true
     local blocking_rule = trackingManager:getMatchingRulesForRequest("block",";", stop_at_first_block_match)
     if blocking_rule == nil then -- there's nothing to block so let this request move on
-        return self:exitFn(ngx.HTTP_OK), true
+        return ngx.HTTP_OK, ""
     end
     -- there's one blocking rule matching this request
-    return self:exitFn(RESPONSES.BLOCK_REQUEST.error_code, cjson.encode(RESPONSES.BLOCK_REQUEST)), false
+    return RESPONSES.BLOCK_REQUEST.error_code, cjson.encode(RESPONSES.BLOCK_REQUEST)
 end
 
 function _M:validateRequest(obj)
-    return self:validate_blocking_rules(obj)
+    return self:exitFn(self:validate_blocking_rules(obj))
 end
 
 return _M

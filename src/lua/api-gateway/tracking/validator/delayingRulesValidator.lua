@@ -33,18 +33,18 @@ function _M:validate_delaying_rules(config_obj)
     local stop_at_first_delay_match = true
     local delaying_rule = trackingManager:getMatchingRulesForRequest("delay",";", stop_at_first_delay_match)
     if delaying_rule == nil then -- do not delay request
-        return self:exitFn(ngx.HTTP_OK)
+        return ngx.HTTP_OK
     end
     -- there's one delaying rule matching this request
     local actualDelay = getActualDelay(delaying_rule)
 
     ngx.log(ngx.DEBUG, "delaying request with " .. tostring(actualDelay) .. " seconds out of the rule setting: " .. tostring(delaying_rule.data) .. " seconds")
     ngx.sleep(actualDelay);
-    return self:exitFn(ngx.HTTP_OK)
+    return ngx.HTTP_OK
 end
 
 function _M:validateRequest(obj)
-    return self:validate_delaying_rules(obj)
+    return self:exitFn(self:validate_delaying_rules(obj))
 end
 
 return _M
