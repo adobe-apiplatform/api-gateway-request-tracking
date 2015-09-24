@@ -105,7 +105,7 @@ __DATA__
 [
 '{"result":"success"}
 ',
-'[{"domain":"*;*;200;*","format":"$publisher_org_name;$consumer_org_name;$status;$request_method","id":111,"action":"TRACK","expire_at_utc":"1583910454"}]
+'[{"domain":"*;*;200;*","format":"$publisher_org_name;$consumer_org_name;$status;$request_method","id":111,"action":"TRACK","expire_at_utc":1583910454}]
 ',
 'not-blocked
 ',

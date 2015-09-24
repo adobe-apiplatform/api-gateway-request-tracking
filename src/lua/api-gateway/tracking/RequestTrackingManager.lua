@@ -17,26 +17,29 @@ local _M = {}
 
 local KNWON_RULES =
 {
-    BLOCK = "blocking_rules_dict",
-    TRACK = "tracking_rules_dict",
-    DEBUG = "debuging_rules_dict",
-    DELAY = "delaying_rules_dict",
+    BLOCK   = "blocking_rules_dict",
+    TRACK   = "tracking_rules_dict",
+    DEBUG   = "debuging_rules_dict",
+    DELAY   = "delaying_rules_dict",
+    REWRITE = "rewriting_rules_dict",
     ["RETRY-AFTER"] = "retrying_rules_dict"
 }
 
 local last_modified_date = {
-    BLOCK = -1,
-    TRACK = -1,
-    DEBUG = -1,
-    DELAY = -1,
+    BLOCK   = -1,
+    TRACK   = -1,
+    DEBUG   = -1,
+    DELAY   = -1,
+    REWRITE = -1,
     ["RETRY-AFTER"] = -1
 }
 
 local cached_rules = {
-    BLOCK = {}, --- holds a per worker cache of the BLOCK rules
-    TRACK = {}, --- holds a per worker cache of the TRACK rules
-    DEBUG = {}, --- holds a per worker cache of the DEBUG rules
-    DELAY = {}, --- holds a per worker cache of the DELAY rules
+    BLOCK   = {}, --- holds a per worker cache of the BLOCK rules
+    TRACK   = {}, --- holds a per worker cache of the TRACK rules
+    DEBUG   = {}, --- holds a per worker cache of the DEBUG rules
+    DELAY   = {}, --- holds a per worker cache of the DELAY rules
+    REWRITE = {}, --- holds a per worker cache of the REWRITE rules
     ["RETRY-AFTER"] = {} --- holds a per worker cache of the RETRY rules
 }
 
@@ -77,7 +80,7 @@ local function addSingleRule(rule, json_string)
     end
 
     -- TODO: make sure format doesn't have any spaces at all
-    local success, err, forcible = dict:set(rule.id .. " " .. rule.format, rule.expire_at_utc .. " " .. rule.domain, expire_in, (rule.data or 0) )
+    local success, err, forcible = dict:set(rule.id .. " " .. rule.format, cjson.encode(rule), expire_in, (rule.data or 0) )
     ngx.log(ngx.WARN, "New blocking rule added at:" .. tostring(ngx.var.msec) .. ", expires in:" .. tostring(expire_in) .. ", Rule:" .. tostring(json_string))
     dict:set("_lastModified", now, 0)
     return success, err, forcible
@@ -150,21 +153,22 @@ function _M:getRulesForType(rule_type)
     -- wil return a max os 1024 keys
     cached_rules[rule_type] = {}
     local keys = dict:get_keys()
-    local val, data, domain, expire_at_utc, id
-    local split_idx, i, format_split_idx
+    local val_string, val, data, domain, expire_at_utc, id, meta
+    local i, format_split_idx
     for i, key in pairs(keys) do
-        val, data = dict:get(key)
-        if (val ~= nil and key ~= "_lastModified") then
-            split_idx = val:find(" ")
+        val_string, data = dict:get(key)
+        if (val_string ~= nil and key ~= "_lastModified") then
             format_split_idx = key:find(" ")
-            if ( split_idx ~= nil and format_split_idx ~= nil ) then
+            val = cjson.decode(val_string)
+            if ( val ~= nil and format_split_idx ~= nil ) then
                 id = key:sub(1, format_split_idx - 1)
                 cached_rules[rule_type][i] = {
                     id              = tonumber(id) or id, -- try to convert it to a number, but if it's not the keep string
                     format          = key:sub(format_split_idx + 1),
-                    domain          = val:sub(split_idx + 1),
-                    expire_at_utc   = val:sub(1, split_idx - 1),
+                    domain          = val["domain"],
+                    expire_at_utc   = val["expire_at_utc"],
                     action          = string.upper(rule_type),
+                    meta            = val["meta"],
                     data            = data
                 }
             else
@@ -285,7 +289,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
     ngx.log(ngx.DEBUG, "Getting matching rules for:", rule_type, ", separator=", format_separator, " exit_on_first_match=", tostring(fail_fast))
     local active_rules = self:getRulesForType(rule_type)
 
-    local format, domain, expire_at_utc, action, id, data, match_success, compiled_domain
+    local format, domain, expire_at_utc, action, id, data, meta, match_success, compiled_domain
     local matched_variables, matched_domains, err
     local matched_rules_counter = 0
     local matched_rules = {}
@@ -296,6 +300,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
         format = rule.format
         domain = rule.domain
         action = rule.action
+        meta   = rule.meta
         expire_at_utc = rule.expire_at_utc
         data = rule.data
         ngx.log(ngx.DEBUG, "... matching format=", tostring(format), " domain=", tostring(domain), " id=", tostring(id))
@@ -330,7 +335,8 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                             id = id,
                             format = format,
                             domain = compiled_domain,
-                            data = data
+                            data = data,
+                            meta = meta
                         }
                         if fail_fast == true then
                             return matched_rules[matched_rules_counter]

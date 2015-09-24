@@ -91,7 +91,7 @@ __DATA__
 --- response_body_like eval
 [
 '\{"result":"success"\}.*',
-'.*{"domain":"pub1;subpath-to-delay","format":"\$publisher_org_name;\$subpath","id":222,"action":"DELAY","expire_at_utc":"1583910454"},{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":"1583910454"}.*',
+'.*{"domain":"pub1;subpath-to-delay","format":"\$publisher_org_name;\$subpath","id":222,"action":"DELAY","expire_at_utc":1583910454},{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":1583910454}.*',
 '(\d{2,4})+',
 '(\d{2,4})+',
 "0
@@ -149,8 +149,8 @@ __DATA__
 --- response_body_like eval
 [
 '\{"result":"success"\}.*',
-'.*{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":"1583910454"}.*',
-'.*{"domain":"pub1;subpath-to-block","format":"\$publisher_org_name;\$subpath","id":222,"action":"BLOCK","expire_at_utc":"1583910454"}.*',
+'.*{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":1583910454}.*',
+'.*{"domain":"pub1;subpath-to-block","format":"\$publisher_org_name;\$subpath","id":222,"action":"BLOCK","expire_at_utc":1583910454}.*',
 '{"error_code":"429050","message":"Too many requests"}
 
 ',
