@@ -38,7 +38,7 @@ function _M:validate_delaying_rules(config_obj)
     -- there's one delaying rule matching this request
     local actualDelay = getActualDelay(delaying_rule)
 
-    ngx.var.gw_var_delayed = "delayed"
+    ngx.var.request_delayed = "delayed"
     ngx.log(ngx.DEBUG, "delaying request with " .. tostring(actualDelay) .. " seconds out of the rule setting: " .. tostring(delaying_rule.data) .. " seconds")
     ngx.sleep(actualDelay);
     return ngx.HTTP_OK
