@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 15) ;
+plan tests => repeat_each() * (blocks() * 13) - 1;
 
 my $pwd = cwd();
 
@@ -200,3 +200,104 @@ __DATA__
 [error]
 
 
+
+=== TEST 3: test that we can block requests using query params
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/default_validators.conf;
+        include ../../api-gateway/tracking_service.conf;
+        set $publisher_org_name 'pub1';
+
+        error_log ../test-logs/blockingRequestValidator_test3_error.log debug;
+
+        set $validator_custom_error_responses '{
+            "BLOCK_REQUEST" : { "http_status" : 429, "error_code" : 429050, "message" : "{\\"error_code\\":\\"429050\\",\\"message\\":\\"Too many requests\\"}","headers" :  { "content-type" : "application/json" } }
+        }';
+
+        location /policy-with-query-string {
+            set $validate_service_plan "on; path=/validate_service_plan$is_args$args; order=1; ";
+
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua "ngx.say('not-blocked')";
+
+        }
+--- pipelined_requests eval
+['POST /tracking/
+[{
+  "id": 333,
+  "domain" : "pub1;test",
+  "format": "$publisher_org_name;$arg_dev",
+  "expire_at_utc": 1583910454,
+  "action" : "BLOCK"
+}]
+',
+"GET /tracking/block",
+"POST /policy-with-query-string?dev=test",
+"POST /policy-with-query-string?dev=test2"
+]
+--- response_body eval
+[
+'{"result":"success"}
+',
+'[{"domain":"pub1;test","format":"$publisher_org_name;$arg_dev","id":333,"action":"BLOCK","expire_at_utc":1583910454}]
+',
+'{"error_code":"429050","message":"Too many requests"}
+',
+'not-blocked
+'
+]
+--- error_code eval
+ [200, 200, 429, 200]
+--- no_error_log
+[error]
+
+
+
+=== TEST 4: test that we can block requests using headers
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/default_validators.conf;
+        include ../../api-gateway/tracking_service.conf;
+        set $publisher_org_name 'pub1';
+
+        error_log ../test-logs/blockingRequestValidator_test4_error.log debug;
+
+        set $validator_custom_error_responses '{
+            "BLOCK_REQUEST" : { "http_status" : 429, "error_code" : 429050, "message" : "{\\"error_code\\":\\"429050\\",\\"message\\":\\"Too many requests\\"}","headers" :  { "content-type" : "application/json" } }
+        }';
+
+        location /policy-with-headers {
+            set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
+
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua "ngx.say('not-blocked')";
+
+        }
+--- more_headers
+Dev:test
+--- pipelined_requests eval
+['POST /tracking/
+[{
+  "id": 444,
+  "domain" : "pub1;test",
+  "format": "$publisher_org_name;$http_dev",
+  "expire_at_utc": 1583910454,
+  "action" : "BLOCK"
+}]
+',
+"GET /tracking/block",
+"GET /policy-with-headers"
+]
+--- response_body eval
+[
+'{"result":"success"}
+',
+'[{"domain":"pub1;test","format":"$publisher_org_name;$http_dev","id":444,"action":"BLOCK","expire_at_utc":1583910454}]
+',
+'{"error_code":"429050","message":"Too many requests"}
+'
+]
+--- error_code eval
+ [200, 200, 429]
+--- no_error_log
+[error]
