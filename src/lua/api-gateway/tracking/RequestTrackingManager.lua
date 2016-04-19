@@ -294,7 +294,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
     local matched_rules_counter = 0
     local matched_rules = {}
     for i, rule in pairs(active_rules) do
-        ngx.log(ngx.DEBUG, "MATCHING RULE ", tostring(i))
+        ngx.log(ngx.DEBUG, "... probing rule id=", tostring(rule.id) )
         matched_variables = {}
         id = rule.id
         format = rule.format
@@ -303,7 +303,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
         meta   = rule.meta
         expire_at_utc = rule.expire_at_utc
         data = rule.data
-        ngx.log(ngx.DEBUG, "... matching format=", tostring(format), " domain=", tostring(domain), " id=", tostring(id))
+        ngx.log(ngx.DEBUG, "... matching format=", tostring(format), " with domain=", tostring(domain), " id=", tostring(id))
         if (format ~= nil and domain ~= nil and action ~= nil and expire_at_utc ~= nil and id ~= nil) then
             -- j - enable PCRE JIT compilation
             -- o - compile once
@@ -342,6 +342,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                             return matched_rules[matched_rules_counter]
                         end
                     end
+                    ngx.log(ngx.DEBUG, "... rule doesn't match. id=", tostring(rule.id))
                 end
             end
         end

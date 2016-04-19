@@ -80,7 +80,10 @@ __DATA__
             set $consumer_org_name $1;
             set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
 
-            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            access_by_lua "
+                ngx.apiGateway.tracking.track()
+                ngx.apiGateway.validation.validateRequest()
+            ";
             content_by_lua "ngx.say('not-blocked')";
             log_by_lua '
                 ngx.apiGateway.tracking.track()
