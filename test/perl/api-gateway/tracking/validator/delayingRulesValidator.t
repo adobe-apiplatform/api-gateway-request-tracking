@@ -167,14 +167,13 @@ __DATA__
 '.*{"domain":"pub1;subpath-to-delay-2","format":"\$publisher_org_name;\$subpath","data":9,"id":223,"action":"DELAY","expire_at_utc":1583910454}.*',
 '.*{"domain":"pub1;subpath-to-block","format":"\$publisher_org_name;\$subpath","id":222,"action":"BLOCK","expire_at_utc":1583910454}.*',
 '{"error_code":"429050","message":"Too many requests"}
-
 ',
 '(\d{2,4})+',
 "0
 "
 ]
 --- error_code eval
- [200, 200, 200, 429050, 200, 200]
+ [200, 200, 200, 429, 200, 200]
 --- no_error_log
 [error]
 
