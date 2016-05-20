@@ -194,28 +194,6 @@ function _M:getRulesForType(rule_type)
     return cached_rules[rule_type]
 end
 
---- Returns the value of the variable by looking first into cache table, the into the ngx.ctx scope and then into ngx.var scope.
--- An optional cache table may be provided to look first in the cache
--- @param request_var the name of the variable to look for
--- @param cache table used for local caching of variables
---
-local function getRequestVariable(request_var, cache)
-    -- read it first from the local cache table
-    if cache ~= nil and cache[request_var] ~= nil then
-        return cache[request_var]
-    end
-
-    local ctx_var = ngx.ctx[request_var]
-    if ctx_var ~= nil then
-        cache[request_var] = ctx_var
-        return ctx_var
-    end
-
-    local ngx_var = ngx.var[request_var]
-    cache[request_var] = ngx_var
-    return ngx_var
-end
-
 --- Return (boolean, string ) uple. If it's a positive match it returns the componded string value otherwise it returns false
 -- Example
 -- format  = $publisher_org_name;$service_id;$api_key;
@@ -249,7 +227,8 @@ local function matchVarsWithDomains(vars, domains, cache, separator)
     local v, d, i
     for i = 1, domains_length do
         -- ngx.log(ngx.DEBUG, "VAR " , tostring(i))
-        v = getRequestVariable(vars[i], cache)
+        local variableManager = ngx.apiGateway.tracking.variableManager
+        v = variableManager:getRequestVariable(vars[i], cache)
         -- ngx.log(ngx.DEBUG, "VAL=", v)
         d = domains[i]
         -- ngx.log(ngx.DEBUG, "DOMAIN=", d)

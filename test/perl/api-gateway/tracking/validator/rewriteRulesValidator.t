@@ -54,6 +54,10 @@ our $HttpConfig = <<_EOC_;
     lua_shared_dict delaying_rules_dict 5m;
     lua_shared_dict retrying_rules_dict 5m;
     lua_shared_dict rewriting_rules_dict 5m;
+
+    client_body_temp_path /tmp/;
+    proxy_temp_path /tmp/;
+    fastcgi_temp_path /tmp/;
 _EOC_
 
 #no_diff();
