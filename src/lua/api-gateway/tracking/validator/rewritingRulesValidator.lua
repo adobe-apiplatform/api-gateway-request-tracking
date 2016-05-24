@@ -32,6 +32,13 @@ local _M = BaseValidator:new()
 
 local function getBackendFromRewriteRule( rewrite_rule )
     local backend = rewrite_rule.meta or nil
+    local variableManager = ngx.apiGateway.tracking.variableManager
+    if ( backend == nil ) then
+        return nil
+    end
+    if ( string.sub(backend, 1, 1) == "$" ) then
+        backend = variableManager:getRequestVariable(string.sub(backend, 2), nil)
+    end
     return backend
 end
 
