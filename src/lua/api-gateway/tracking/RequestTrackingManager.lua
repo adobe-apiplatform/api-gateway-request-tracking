@@ -14,7 +14,7 @@
 
 
 --
--- Exposes utility functions to add/remove Tracking rules ( BLOCK, TRACK, DEBUG, DELAY, RETRY-AFTER )
+-- Exposes utility functions to add/remove Tracking rules ( BLOCK, TRACK, TRACE, DEBUG, DELAY, RETRY-AFTER )
 --
 -- You should map this to a REST API Endpoint:
 --
@@ -34,6 +34,7 @@ local KNWON_RULES =
 {
     BLOCK   = "blocking_rules_dict",
     TRACK   = "tracking_rules_dict",
+    TRACE   = "traceing_rules_dict",
     DEBUG   = "debuging_rules_dict",
     DELAY   = "delaying_rules_dict",
     REWRITE = "rewriting_rules_dict",
@@ -43,6 +44,7 @@ local KNWON_RULES =
 local last_modified_date = {
     BLOCK   = -1,
     TRACK   = -1,
+    TRACE   = -1,
     DEBUG   = -1,
     DELAY   = -1,
     REWRITE = -1,
@@ -52,6 +54,7 @@ local last_modified_date = {
 local cached_rules = {
     BLOCK   = {}, --- holds a per worker cache of the BLOCK rules
     TRACK   = {}, --- holds a per worker cache of the TRACK rules
+    TRACE   = {}, --- holds a per worker cache of the TRACE rules
     DEBUG   = {}, --- holds a per worker cache of the DEBUG rules
     DELAY   = {}, --- holds a per worker cache of the DELAY rules
     REWRITE = {}, --- holds a per worker cache of the REWRITE rules
@@ -140,7 +143,7 @@ end
 
 --- Returns an object with the current active rules for the given rule_type
 --
--- @param rule_type BLOCK, TRACK, DEBUG, DELAY or RETRY-AFTER
+-- @param rule_type BLOCK, TRACK, TRACE, DEBUG, DELAY or RETRY-AFTER
 --
 function _M:getRulesForType(rule_type)
     local rule_type = string.upper(rule_type)
@@ -268,7 +271,7 @@ end
 
 ---
 -- Returns an object with only the rules matching the current request variables. It's up to the caller to decide what to do with the result
--- @param rule_type BLOCK, TRACK, DEBUG, DELAY or RETRY-AFTER
+-- @param rule_type BLOCK, TRACK, TRACE, DEBUG, DELAY or RETRY-AFTER
 -- @param separator For instance ";". It's the character separating the values and variables
 -- @param exit_on_first_match Default:true. When true the method exits on the first match.
 -- This is useful for BLOCK, DELAY or RETRY-AFTER behaviours when the first match would alter the request status.

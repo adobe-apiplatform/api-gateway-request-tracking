@@ -39,6 +39,9 @@ local function getActualDelay( delaying_rule )
     return math.random( actualDelay / 2, actualDelay  )
 end
 
+---
+-- @param config_obj configuration object
+--
 function _M:validate_delaying_rules(config_obj)
     local trackingManager = ngx.apiGateway.tracking.manager
     if ( trackingManager == nil ) then
