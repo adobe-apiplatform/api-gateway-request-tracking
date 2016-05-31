@@ -176,12 +176,24 @@ Sample usage
 ============
 
 ```nginx
+# initial setup 
 # ...
  init_worker_by_lua_block {
+        -- initialize a ZMQ Logger 
+        local ZmqLogger = require "api-gateway.zmq.ZeroMQLogger"
+        local zmqLogger = ZmqLogger:new()
+        zmqLogger:connect(ZmqLogger.SOCKET_TYPE.ZMQ_PUB, "ipc:///tmp/nginx_queue_listen")
+            
         ngx.apiGateway = ngx.apiGateway or {}
+        ngx.apiGateway.zmqLogger = zmqLogger                                  
         ngx.apiGateway.validation = require "api-gateway.validation.factory"  -- enforce ACTIONs
         ngx.apiGateway.tracking = require "api-gateway.tracking.factory"      -- track requests
      }
+ # dictionaries used for storing the throttling / rate limiting rules
+ lua_shared_dict tracking_rules_dict 5m;
+ lua_shared_dict blocking_rules_dict 5m;
+ lua_shared_dict delaying_rules_dict 5m;
+ lua_shared_dict rewriting_rules_dict 5m;    
 # ... 
 
 #
@@ -207,7 +219,7 @@ location /t {
 ```
 
 
-Expose a simple HTTP Service to register rules:
+Expose a simple HTTP Service to register rules and list the active ones:
 
 ```nginx
 server {
@@ -218,7 +230,24 @@ server {
 }
 ```
 
-See [tracking_service.conf](test/resources/tracking_service.conf) that details the HTTP endpoints.
+See [tracking_service.conf](test/resources/api-gateway/tracking_service.conf) that details the HTTP endpoints.
+
+The following request adds a new blocking rule (expiring on `7/1/2016`):
+
+ ```bash
+ curl -i -X POST http://<docker_host_ip>:5000/tracking \ 
+     --data '{  "id": 10,  "domain" : "1234",  "format": "$http_x_api_key",  "expire_at_utc": 1467331200000,  "action" : "BLOCK"}'
+     
+ {"result":"success"}
+ ```
+
+To check which rules are active:
+
+ ```bash
+curl http://<docker_host_ip>:5000/tracking/block
+
+[{"domain":"1234","format":"$http_x_api_key","id":10,"action":"BLOCK","expire_at_utc":1467331200000}]
+ ```
 
 [Back to TOC](#table-of-contents)
 
