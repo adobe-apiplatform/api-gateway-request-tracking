@@ -6,8 +6,7 @@ PREFIX ?=          /usr/local
 LUA_INCLUDE_DIR ?= $(PREFIX)/include
 LUA_LIB_DIR ?=     $(PREFIX)/lib/lua/$(LUA_VERSION)
 INSTALL ?= install
-TEST_NGINX_AWS_CLIENT_ID ?= ''
-TEST_NGINX_AWS_SECRET ?= ''
+REDIS_SERVER ?= $(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server
 
 .PHONY: all clean test install
 
@@ -22,6 +21,9 @@ install: all
 	$(INSTALL) src/lua/api-gateway/tracking/validator/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/validator/
 
 test: redis
+	echo "Starting redis server on default port"
+	# $(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server test/resources/redis/redis-test.conf
+	$(REDIS_SERVER) test/resources/redis/redis-test.conf
 	echo "updating git submodules ..."
 	if [ ! -d "test/resources/test-nginx/lib" ]; then	git submodule update --init --recursive; fi
 	echo "running tests ..."
@@ -30,13 +32,16 @@ test: redis
 	cp -r test/resources/api-gateway $(BUILD_DIR)
 	rm -f $(BUILD_DIR)/test-logs/*
 
-	PATH=/usr/local/sbin:$$PATH TEST_NGINX_SERVROOT=`pwd`/$(BUILD_DIR)/servroot TEST_NGINX_PORT=1989 prove -I ./test/resources/test-nginx/lib -I ./test/resources/test-nginx/inc -r ./test/perl
+	PATH=/usr/local/sbin:$$PATH TEST_NGINX_SERVROOT=`pwd`/$(BUILD_DIR)/servroot TEST_NGINX_PORT=1989 prove -I ./test/resources/test-nginx/lib -I ./test/resources/test-nginx/inc  -r ./test/perl
 	cat $(BUILD_DIR)/redis-test.pid | xargs kill
 
 redis: all
 	mkdir -p $(BUILD_DIR)
-	tar -xf test/resources/redis/redis-$(REDIS_VERSION).tar.gz -C $(BUILD_DIR)/
-	cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make
+	if [ "$(REDIS_SERVER)" = "$(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server" ]; then \
+		tar -xf test/resources/redis/redis-$(REDIS_VERSION).tar.gz -C $(BUILD_DIR)/;\
+		cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make; \
+	fi
+	echo " ... using REDIS_SERVER=$(REDIS_SERVER)"
 
 .PHONY: pre-docker-test
 pre-docker-test:
