@@ -38,6 +38,43 @@ redis: all
 	tar -xf test/resources/redis/redis-$(REDIS_VERSION).tar.gz -C $(BUILD_DIR)/
 	cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make
 
+.PHONY: pre-docker-test
+pre-docker-test:
+	echo "   pre-docker-test"
+	echo "   cleaning up any test_redis docker image"
+	docker ps | grep test_redis | awk '{print $$1}' | xargs docker stop | xargs docker rm
+	rm -rf $(BUILD_DIR)/*
+	rm -rf  ~/tmp/apiplatform/api-gateway-request-tracking/
+	mkdir  -p $(BUILD_DIR)
+	mkdir  -p $(BUILD_DIR)/test-logs
+	cp -r test/resources/api-gateway $(BUILD_DIR)
+	sed -i '' 's/127\.0\.0\.1/redis\.docker/g' $(BUILD_DIR)/api-gateway/redis-upstream.conf
+	rm -f $(BUILD_DIR)/test-logs/*
+	mkdir -p ~/tmp/apiplatform/api-gateway-request-tracking
+	cp -r ./src ~/tmp/apiplatform/api-gateway-request-tracking/
+	cp -r ./test ~/tmp/apiplatform/api-gateway-request-tracking/
+	cp -r ./target ~/tmp/apiplatform/api-gateway-request-tracking/
+	mkdir -p ~/tmp/apiplatform/api-gateway-request-tracking/target/test-logs
+	ln -s ~/tmp/apiplatform/api-gateway-request-tracking/target/test-logs ./target/test-logs
+
+.PHONY: get-redis-docker-ip
+get-redis-docker-ip:
+	$(eval $@_IP := $(shell docker run --entrypoint=ifconfig alpine eth0 | grep "inet addr" | cut -d: -f2 | awk '{ print $$1}'))
+	@echo "Assuming the next IP for the docker container is:" $($@_IP)
+	sed -i '' 's/127\.0\.0\.1\:6379/$($@_IP)\:6379/g' ~/tmp/apiplatform/api-gateway-request-tracking/test/perl/api-gateway/tracking/requestTrackingManager.t
+
+post-docker-test:
+	echo "    post-docker-test"
+	cp -r ~/tmp/apiplatform/api-gateway-request-tracking/target/ ./target
+	rm -rf  ~/tmp/apiplatform/api-gateway-request-tracking
+
+run-docker-test:
+	echo "   run-docker-test"
+	- cd ./test && docker-compose up --force-recreate
+
+test-docker: pre-docker-test get-redis-docker-ip run-docker-test post-docker-test
+	echo "running tests with docker ..."
+
 package:
 	git archive --format=tar --prefix=api-gateway-request-tracking-0.8/ -o api-gateway-request-tracking-0.8.tar.gz -v HEAD
 
