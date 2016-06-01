@@ -13,16 +13,31 @@
   ]]
 
 local cjson = require "cjson"
-local BaseValidator = require "api-gateway.validation.validator"
-local _M = BaseValidator:new()
+local _M = {}
 
 local kinesisLogger
 
-function _M:sendKinesisMessage(kinesis_data)
-    local partition_key = ngx.utctime() .."-".. math.random(ngx.now() * 1000)
+function _M:new(o)
+    local o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
-    -- Send logs to kinesis
-    kinesisLogger:logMetrics(partition_key, cjson.encode(kinesis_data))
+function _M:sendKinesisMessage(kinesis_data)
+
+    local kinesisSwitch = ngx.var.kinesisSwitch
+    if (kinesisSwitch == nil or kinesisSwitch == "") then
+        kinesisSwitch = "on"
+    end
+    if ( kinesisLogger ~= nil and (kinesisSwitch ~= nil and kinesisSwitch == "on")) then
+        local partition_key = ngx.utctime() .."-".. math.random(ngx.now() * 1000)
+
+        -- Send logs to kinesis
+        kinesisLogger:logMetrics(partition_key, cjson.encode(kinesis_data))
+    else
+        ngx.log(ngx.WARN, "Trace info not sent to kinesis")
+    end
 
 end
 
@@ -37,19 +52,29 @@ function _M:getKinesisMessage(rule)
         kinesis_data[tostring(key)] = tostring(value)
     end
 
+    local meta = rule.meta
+    local meta_length = table.getn(meta)
+
+    local var_value, index
+    for index = 1, meta_length do
+        local variableManager = ngx.apiGateway.tracking.variableManager
+        var_value = variableManager:getRequestVariable(meta[index], nil)
+        kinesis_data[tostring(meta[index])] = tostring(var_value)
+    end
+
     return kinesis_data
 end
 
 ---
 -- @param config_obj configuration object
 --
-function _M:validate_trace_rules(config_obj)
+function _M:log_trace_rules(config_obj)
     local trackingManager = ngx.apiGateway.tracking.manager
     if ( trackingManager == nil ) then
         ngx.log(ngx.WARN, "Please initialize RequestTrackingManager before calling this method")
     end
 
-    kinesisLogger = ngx.apiGateway.getAsyncLogger("kinesis-logger")
+    kinesisLogger = ngx.apiGateway.getAsyncLogger("api-gateway-debugging")
     if ( kinesisLogger == nil ) then
         ngx.log(ngx.WARN, "Could not track request. kinesis logger should not be nil")
         return
@@ -57,24 +82,21 @@ function _M:validate_trace_rules(config_obj)
 
     -- 1. read the keys in the shared dict and compare them with the current request
     local stop_at_first_block_match = false
-    local traceing_rules = trackingManager:getMatchingRulesForRequest("trace", ";", stop_at_first_block_match)
-    if (traceing_rules == nil) then
+    local tracing_rules = trackingManager:getMatchingRulesForRequest("trace", ";", stop_at_first_block_match)
+    if (tracing_rules == nil) then
         return
     end
-    -- 2. for each traceing rule matching the request publish a kinesis message asyncronously
-    for i, rule in pairs(traceing_rules) do
+    -- 2. for each tracing rule matching the request publish a kinesis message asyncronously
+    for i, rule in pairs(tracing_rules) do
         if ( rule ~= nil ) then
             local message = self:getKinesisMessage(rule)
-            self:sendMessage(message)
+            if ( message ~= nil ) then
+                ngx.log(ngx.DEBUG, "Sending tracing info to kinesis: " .. cjson.encode(message))
+                self:sendKinesisMessage(message)
+            end
         end
     end
 end
 
-function _M:validateRequest(obj)
-    local traced_message = self:validate_trace_rules(obj)
-    return traced_message
-end
-
 return _M
-
 

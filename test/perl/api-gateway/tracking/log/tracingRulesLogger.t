@@ -40,6 +40,11 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway = ngx.apiGateway or {}
         ngx.apiGateway.validation = require "api-gateway.validation.factory"
         ngx.apiGateway.tracking = require "api-gateway.tracking.factory"
+
+        local function get_logger(name)
+            return {}
+        end
+        ngx.apiGateway.getAsyncLogger = get_logger
      ';
     include "$pwd/conf.d/http.d/*.conf";
     upstream cache_rw_backend {
@@ -50,7 +55,7 @@ our $HttpConfig = <<_EOC_;
     }
     lua_shared_dict blocking_rules_dict 5m;
     lua_shared_dict tracking_rules_dict 5m;
-    lua_shared_dict traceing_rules_dict 5m;
+    lua_shared_dict tracing_rules_dict 5m;
     lua_shared_dict debugging_rules_dict 5m;
     lua_shared_dict delaying_rules_dict 5m;
     lua_shared_dict retrying_rules_dict 5m;
@@ -79,7 +84,10 @@ __DATA__
         location ~ /trace {
             set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
 
-            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            access_by_lua "
+                ngx.apiGateway.tracking.track()
+                ngx.apiGateway.validation.validateRequest()
+            ";
             content_by_lua 'ngx.say(ngx.var.validate_request_response_time)';
 
         }
@@ -89,9 +97,10 @@ __DATA__
 [{
   "id": 222,
   "domain" : "pub1",
-  "format": "$publisher_org_name;$subpath",
+  "format": "$publisher_org_name",
   "expire_at_utc": 1583910454,
-  "action" : "TRACE"
+  "action" : "TRACE",
+  "meta" : ["$request_uri"]
 }]
 ',
 "GET /trace"
@@ -102,7 +111,7 @@ __DATA__
 '0',
 '(\d{2,4})+',
 '(\d{2,4})+',
-'.*{"domain":"pub1","format":"\$publisher_org_name;\$subpath","id":222,"action":"TRACE","expire_at_utc":1583910454}.*'
+'.*{"domain":"pub1","format":"\$publisher_org_name","id":222,"action":"TRACE","expire_at_utc":1583910454}.*'
 ]
 --- error_code_like eval
  [200, 200, 200, 200, 200]

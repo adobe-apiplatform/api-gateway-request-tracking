@@ -34,7 +34,7 @@ local KNWON_RULES =
 {
     BLOCK   = "blocking_rules_dict",
     TRACK   = "tracking_rules_dict",
-    TRACE   = "traceing_rules_dict",
+    TRACE   = "tracing_rules_dict",
     DEBUG   = "debuging_rules_dict",
     DELAY   = "delaying_rules_dict",
     REWRITE = "rewriting_rules_dict",

@@ -41,6 +41,11 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway.validation = require "api-gateway.validation.factory"
         ngx.apiGateway.tracking = require "api-gateway.tracking.factory"
 
+        local function get_logger(name)
+            return {}
+        end
+        ngx.apiGateway.getAsyncLogger = get_logger
+
         local function loadrequire(module)
             local function requiref(module)
                 require(module)

@@ -30,8 +30,7 @@ local RequestTrackingManager = require "api-gateway.tracking.RequestTrackingMana
 local RequestVariableManager = require "api-gateway.tracking.RequestVariableManager"
 local BlockingRulesValidator = require "api-gateway.tracking.validator.blockingRulesValidator"
 local DelayingRulesValidator = require "api-gateway.tracking.validator.delayingRulesValidator"
-local TracingRulesValidator = require "api-gateway.tracking.validator.tracingRulesValidator"
-local DebuggingRulesValidator = require "api-gateway.tracking.validator.debuggingRulesValidator"
+local TracingRulesLogger     = require "api-gateway.tracking.log.tracingRulesLogger"
 local TrackingRulesLogger    = require "api-gateway.tracking.log.trackingRulesLogger"
 local cjson = require "cjson"
 
@@ -77,15 +76,13 @@ local function _validateServicePlan()
     return delayingRulesValidator:validateRequest()
 end
 
-local function _traceRequest()
-    local tracingRulesValidator = TracingRulesValidator:new()
-    return tracingRulesValidator:validate_tracing_rules()
-end
-
 --- Track the rules that are active, sending an async message to a queue with the usage
 -- This method should be called from the log phase ( log_by_lua )
 --
 local function _trackRequest()
+    local tracingRulesLogger = TracingRulesLogger:new()
+    tracingRulesLogger:log_trace_rules()
+
    local trackingRulesLogger = TrackingRulesLogger:new()
    return trackingRulesLogger:log()
 end
@@ -95,7 +92,6 @@ return {
     variableManager = RequestVariableManager,
     validateServicePlan = _validateServicePlan,
     track = _trackRequest,
-    trace = _traceRequest,
     POST_HANDLER = _API_POST_Handler,
     GET_HANDLER = _API_GET_Handler
 }
