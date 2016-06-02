@@ -13,9 +13,9 @@
   ]]
 
 local cjson = require "cjson"
-local _M = {}
+local su = require "api-gateway.tracking.util.stringutil"
 
-local kinesisLogger
+local _M = {}
 
 function _M:new(o)
     local o = o or {}
@@ -24,45 +24,30 @@ function _M:new(o)
     return o
 end
 
-function _M:sendKinesisMessage(kinesis_data)
+function _M:buildTraceMessage(rule)
+    local data = {}
 
-    local kinesisSwitch = ngx.var.kinesisSwitch
-    if (kinesisSwitch == nil or kinesisSwitch == "") then
-        kinesisSwitch = "on"
-    end
-    if ( kinesisLogger ~= nil and (kinesisSwitch ~= nil and kinesisSwitch == "on")) then
-        local partition_key = ngx.utctime() .."-".. math.random(ngx.now() * 1000)
-
-        -- Send logs to kinesis
-        kinesisLogger:logMetrics(partition_key, cjson.encode(kinesis_data))
-    else
-        ngx.log(ngx.WARN, "Trace info not sent to kinesis")
-    end
-
-end
-
-function _M:getKinesisMessage(rule)
-    local kinesis_data = {}
-
-    kinesis_data["id"] = tostring(rule.id)
-    kinesis_data["domain"] = tostring(rule.domain)
-    kinesis_data["request_body"] = tostring(ngx.var.request_body)
+    data["id"] = tostring(rule.id)
+    data["domain"] = tostring(rule.domain)
+    data["request_body"] = tostring(ngx.var.request_body)
+    data["status"] = tostring(ngx.var.status)
 
     for key,value in pairs(ngx.header) do
-        kinesis_data[tostring(key)] = tostring(value)
+        data[tostring(key)] = tostring(value)
     end
 
-    local meta = rule.meta
+    local meta = rule.meta:split(";")
     local meta_length = table.getn(meta)
 
     local var_value, index
     for index = 1, meta_length do
         local variableManager = ngx.apiGateway.tracking.variableManager
-        var_value = variableManager:getRequestVariable(meta[index], nil)
-        kinesis_data[tostring(meta[index])] = tostring(var_value)
+        local var_name = string.sub(su.trim(meta[index]), 2);
+        var_value = variableManager:getRequestVariable(var_name, nil)
+        data[var_name] = tostring(var_value)
     end
 
-    return kinesis_data
+    return data
 end
 
 ---
@@ -74,9 +59,9 @@ function _M:log_trace_rules(config_obj)
         ngx.log(ngx.WARN, "Please initialize RequestTrackingManager before calling this method")
     end
 
-    kinesisLogger = ngx.apiGateway.getAsyncLogger("api-gateway-debugging")
-    if ( kinesisLogger == nil ) then
-        ngx.log(ngx.WARN, "Could not track request. kinesis logger should not be nil")
+    local tracingLogger = ngx.apiGateway.getAsyncLogger("api-gateway-debugging")
+    if ( tracingLogger == nil ) then
+        ngx.log(ngx.WARN, "Could not track request. Tracing logger should not be nil")
         return
     end
 
@@ -86,13 +71,14 @@ function _M:log_trace_rules(config_obj)
     if (tracing_rules == nil) then
         return
     end
-    -- 2. for each tracing rule matching the request publish a kinesis message asyncronously
+    -- 2. for each tracing rule matching the request publish a tracing message asyncronously
     for i, rule in pairs(tracing_rules) do
         if ( rule ~= nil ) then
-            local message = self:getKinesisMessage(rule)
+            local message = self:buildTraceMessage(rule)
             if ( message ~= nil ) then
-                ngx.log(ngx.DEBUG, "Sending tracing info to kinesis: " .. cjson.encode(message))
-                self:sendKinesisMessage(message)
+                local partition_key = ngx.utctime() .."-".. math.random(ngx.now() * 1000)
+                ngx.log(ngx.DEBUG, "Logging tracing info: " .. cjson.encode(message))
+                tracingLogger:logMetrics(partition_key, cjson.encode(message));
             end
         end
     end

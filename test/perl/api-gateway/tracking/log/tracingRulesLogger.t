@@ -24,7 +24,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 5) + 1 ;
+plan tests => repeat_each() * (blocks() * 5) + 3 ;
 
 my $pwd = cwd();
 
@@ -42,7 +42,11 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway.tracking = require "api-gateway.tracking.factory"
 
         local function get_logger(name)
-            return {}
+            return {
+                logMetrics = function (self, key, value)
+                             ngx.log(ngx.INFO, "Received " .. tostring(value))
+                     end
+            }
         end
         ngx.apiGateway.getAsyncLogger = get_logger
      ';
@@ -81,14 +85,12 @@ __DATA__
 
         error_log ../test-logs/tracingRequestValidator_test1_error.log debug;
 
-        location ~ /trace {
-            set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
+        location /trace {
 
-            access_by_lua "
+            log_by_lua '
                 ngx.apiGateway.tracking.track()
-                ngx.apiGateway.validation.validateRequest()
-            ";
-            content_by_lua 'ngx.say(ngx.var.validate_request_response_time)';
+            ';
+            content_by_lua 'ngx.say("OK")';
 
         }
 --- timeout: 10
@@ -100,7 +102,7 @@ __DATA__
   "format": "$publisher_org_name",
   "expire_at_utc": 1583910454,
   "action" : "TRACE",
-  "meta" : ["$request_uri"]
+  "meta" : "$request_uri; $request_method;$publisher_org_name"
 }]
 ',
 "GET /trace"
@@ -108,12 +110,12 @@ __DATA__
 --- response_body_like eval
 [
 '\{"result":"success"\}.*',
-'0',
-'(\d{2,4})+',
-'(\d{2,4})+',
-'.*{"domain":"pub1","format":"\$publisher_org_name","id":222,"action":"TRACE","expire_at_utc":1583910454}.*'
+'OK'
 ]
 --- error_code_like eval
- [200, 200, 200, 200, 200]
+ [200, 200]
+--- grep_error_log eval: qr/Received .*?/
+--- grep_error_log_out
+request_uri
 --- no_error_log
 [error]
