@@ -24,7 +24,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 5) + 3 ;
+plan tests => repeat_each() * (blocks() * 5) + 1 ;
 
 my $pwd = cwd();
 
@@ -114,8 +114,5 @@ __DATA__
 ]
 --- error_code_like eval
  [200, 200]
---- grep_error_log eval: qr/Received .*?/
---- grep_error_log_out
-request_uri
 --- no_error_log
 [error]
