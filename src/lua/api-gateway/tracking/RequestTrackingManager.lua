@@ -229,16 +229,18 @@ local function matchVarsWithDomains(vars, domains, cache, separator)
         -- ngx.log(ngx.DEBUG, "VAR " , tostring(i))
         local variableManager = ngx.apiGateway.tracking.variableManager
         v = variableManager:getRequestVariable(vars[i], cache)
-        -- ngx.log(ngx.DEBUG, "VAL=", v)
-        d = domains[i]
-        -- ngx.log(ngx.DEBUG, "DOMAIN=", d)
-        if (d == "*") then
-            str = str .. v .. separator
-        else
-            if d ~= v then
-                return false, str
+        if v ~= nil then
+            -- ngx.log(ngx.DEBUG, "VAL=", v)
+            d = domains[i]
+            -- ngx.log(ngx.DEBUG, "DOMAIN=", d)
+            if (d == "*") then
+                str = str .. v .. separator
+            else
+                if d ~= v then
+                    return false, str
+                end
+                str = str .. v .. separator
             end
-            str = str .. v .. separator
         end
     end
     return true, str
