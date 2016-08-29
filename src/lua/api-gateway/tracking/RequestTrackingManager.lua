@@ -170,15 +170,14 @@ function _M:getRulesForType(rule_type)
     -- will return a max of 1024 keys
     cached_rules[rule_type] = {}
     local keys = dict:get_keys()
-    local val_string, val, data, domain, expire_at_utc, id, meta
+    local val_string, val, data, domain, expire_at_utc, id, meta, decode_ok
     local i, format_split_idx
     for i, key in pairs(keys) do
-        ngx.log(ngx.DEBUG, "Extracting rule for key=", tostring(key))
         val_string, data = dict:get(key)
         if (val_string ~= nil and key ~= "_lastModified") then
             format_split_idx = key:find(" ")
-            val = cjson.decode(val_string)
-            if ( val ~= nil and format_split_idx ~= nil ) then
+            decode_ok,  val = pcall(cjson.decode, val_string)
+            if ( decode_ok and val ~= nil and format_split_idx ~= nil ) then
                 id = key:sub(1, format_split_idx - 1)
                 cached_rules[rule_type][i] = {
                     id              = tonumber(id) or id, -- try to convert it to a number, but if it's not keep the string
@@ -190,7 +189,7 @@ function _M:getRulesForType(rule_type)
                     data            = data
                 }
             else
-                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(key), " with val:", tostring(val))
+                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(dict_name), ", key=", tostring(key), ", val=", tostring(val))
             end
         end
     end

@@ -372,7 +372,8 @@ X-Test: test
 ]
 --- response_body eval
 [
-"added invalid value\n",
+"nil
+added invalid value\n",
 "{}\n"
 ]
 --- error_code_like eval
