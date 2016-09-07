@@ -24,7 +24,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 9) + 3 ;
+plan tests => repeat_each() * (blocks() * 9);
 
 my $pwd = cwd();
 
@@ -331,6 +331,55 @@ GET /test-request-match
 [error]
 
 
+=== TEST 6: test with an invalid dictionary key/value pair
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/tracking_service.conf;
+        error_log ../test-logs/requestTrackingManager_test6_error.log debug;
+
+        location /add-invalid-entries {
+            set_by_lua_block $generated_expires_at {
+                        -- NOTE: assumption is that ngx.now() and ngx.time() is UTC
+                        -- expire in 1 second
+                        return ( ngx.time() + 1 )
+            }
+
+            content_by_lua_block {
+                local trackingManager = ngx.apiGateway.tracking.manager
+                local dict_name = "blocking_rules_dict"
+                local dict = ngx.shared[dict_name]
+                assert( dict ~= nil,  "Shared dictionary not defined. Please define it with 'lua_shared_dict " .. tostring(dict_name) .. " 5m';")
+
+                dict:set("_lastModified", ngx.now(), 0)
+                ngx.sleep(0.5)
+
+                -- add an invalid empty string in the dictionary
+                dict:add("key1","")
+
+                local r = trackingManager:getRulesForType("BLOCK")
+                assert( r ~= nil, "Results should not be nil")
+                ngx.say(tostring(r[1]))
+                ngx.say("added invalid value")
+            }
+
+        }
+--- more_headers
+X-Test: test
+--- pipelined_requests eval
+[
+"GET /add-invalid-entries",
+"GET /tracking/block"
+]
+--- response_body eval
+[
+"nil
+added invalid value\n",
+"{}\n"
+]
+--- error_code_like eval
+ [200,200]
+--- no_error_log
+[error]
 
 
 

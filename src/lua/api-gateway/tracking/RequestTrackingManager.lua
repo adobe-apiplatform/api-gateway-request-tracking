@@ -157,28 +157,30 @@ function _M:getRulesForType(rule_type)
     -- 0. check if lastModifiedDate for the dict matches the local date
     local lastModified = dict:get("_lastModified")
     if (lastModified == nil) then
+        ngx.log(ngx.DEBUG, "Returning the rules from the cache as lastModified is nil in the dict named=", tostring(dict_name))
         return cached_rules[rule_type]
     end
     -- 1. return the keys from the local variable, if lastModified date allows and if the local cache is not empty
     if (lastModified == last_modified_date[dict_name]) then
+        ngx.log(ngx.DEBUG, "Returning the rules from the cache as the dict hasn't been updated in the dict named=", tostring(dict_name))
         return cached_rules[rule_type]
     end
     -- 2. else, read it from the shared dict
     -- docs: http://wiki.nginx.org/HttpLuaModule#ngx.shared.DICT.get_keys
-    -- wil return a max os 1024 keys
+    -- will return a max of 1024 keys
     cached_rules[rule_type] = {}
     local keys = dict:get_keys()
-    local val_string, val, data, domain, expire_at_utc, id, meta
+    local val_string, val, data, domain, expire_at_utc, id, meta, decode_ok
     local i, format_split_idx
     for i, key in pairs(keys) do
         val_string, data = dict:get(key)
         if (val_string ~= nil and key ~= "_lastModified") then
             format_split_idx = key:find(" ")
-            val = cjson.decode(val_string)
-            if ( val ~= nil and format_split_idx ~= nil ) then
+            decode_ok,  val = pcall(cjson.decode, val_string)
+            if ( decode_ok and val ~= nil and format_split_idx ~= nil ) then
                 id = key:sub(1, format_split_idx - 1)
                 cached_rules[rule_type][i] = {
-                    id              = tonumber(id) or id, -- try to convert it to a number, but if it's not the keep string
+                    id              = tonumber(id) or id, -- try to convert it to a number, but if it's not keep the string
                     format          = key:sub(format_split_idx + 1),
                     domain          = val["domain"],
                     expire_at_utc   = val["expire_at_utc"],
@@ -187,7 +189,7 @@ function _M:getRulesForType(rule_type)
                     data            = data
                 }
             else
-                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(key), " with val:", tostring(val))
+                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(dict_name), ", key=", tostring(key), ", val=", tostring(val))
             end
         end
     end
