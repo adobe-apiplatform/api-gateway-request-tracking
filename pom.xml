@@ -28,7 +28,7 @@
     <name>API Gateway Request Tracking</name>
 
     <properties>
-        <git.repo>https://github.com/adobe-apiplatform/api-gateway-request-tracking.git</git.repo>
+        <git.repo>git@github.com:adobe-apiplatform/api-gateway-request-tracking.git</git.repo>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
