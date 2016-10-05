@@ -21,7 +21,7 @@
 
     <groupId>com.adobe.api.gateway</groupId>
     <artifactId>api-gateway-request-tracking</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <packaging>pom</packaging>
 
@@ -35,7 +35,8 @@
     <scm>
         <connection>scm:git:${git.repo}</connection>
         <developerConnection>scm:git:${git.repo}</developerConnection>
-    </scm>
+      <tag>api-gateway-request-tracking-1.0.2</tag>
+  </scm>
 
     <build>
         <plugins>
