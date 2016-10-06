@@ -23,7 +23,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <files>
         <file>
-            <source>api-gateway-request-tracking.conf</source>
+            <source>api-gateway-request-tracking-version.conf</source>
             <outputDirectory>meta</outputDirectory>
             <filtered>true</filtered>
         </file>
