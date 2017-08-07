@@ -53,6 +53,8 @@ function _M:validate_blocking_rules(config_obj)
     if blocking_rule == nil then -- there's nothing to block so let this request move on
         return ngx.HTTP_OK, ""
     end
+
+    ngx.var.request_blocked = blocking_rule.id;
     -- there's one blocking rule matching this request
     return RESPONSES.BLOCK_REQUEST.error_code, cjson.encode(RESPONSES.BLOCK_REQUEST)
 end

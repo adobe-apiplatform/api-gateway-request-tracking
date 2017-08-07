@@ -57,7 +57,8 @@ function _M:validate_rewrite_rules(config_obj)
     if rewrite_rule == nil then -- there is no match, so we return nil
         return nil
     end
-    
+
+    ngx.var.request_rewritten = rewrite_rule.id;
     local backend = getBackendFromRewriteRule(rewrite_rule)
     return backend
 end
