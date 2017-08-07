@@ -54,7 +54,7 @@ function _M:validate_blocking_rules(config_obj)
         return ngx.HTTP_OK, ""
     end
 
-    ngx.var.request_blocked = blocking_rule.id;
+    ngx.var.blocked_by = math.floor(tonumber(blocking_rule.id/10000));
     -- there's one blocking rule matching this request
     return RESPONSES.BLOCK_REQUEST.error_code, cjson.encode(RESPONSES.BLOCK_REQUEST)
 end

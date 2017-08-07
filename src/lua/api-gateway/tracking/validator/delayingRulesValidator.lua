@@ -55,7 +55,7 @@ function _M:validate_delaying_rules(config_obj)
 
     ngx.var.request_delayed = actualDelay
     ngx.log(ngx.DEBUG, "delaying request with " .. tostring(actualDelay) .. " seconds out of the rule setting: " .. tostring(delaying_rule.data) .. " seconds")
-    ngx.var.request_delayed = delaying_rule.id;
+    ngx.var.delayed_by = math.floor(tonumber(delaying_rule.id/10000));
     ngx.sleep(actualDelay);
     return ngx.HTTP_OK
 end
