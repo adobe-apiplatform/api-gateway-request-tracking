@@ -90,12 +90,12 @@ local function addSingleRule(rule, json_string)
     local expire_in = rule.expire_at_utc - now
     if (expire_in <= 0) then
         ngx.log(ngx.WARN, "Rule already expired, will expire it form the cache too. input=" .. tostring(json_string))
-        dict:set(rule.id .. " " .. rule.format, "", 0.001, 0)
+        dict:set(rule.id .. " " .. rule.domain, "", 0.001, 0)
         return false
     end
 
     -- TODO: make sure format doesn't have any spaces at all
-    local success, err, forcible = dict:set(rule.id .. " " .. rule.format, cjson.encode(rule), expire_in, (rule.data or 0) )
+    local success, err, forcible = dict:set(rule.id .. " " .. rule.domain, cjson.encode(rule), expire_in, (rule.data or 0) )
     ngx.log(ngx.WARN, "New blocking rule added at:" .. tostring(ngx.var.msec) .. ", expires in:" .. tostring(expire_in) .. ", Rule:" .. tostring(json_string))
     dict:set("_lastModified", now, 0)
     return success, err, forcible
@@ -171,25 +171,25 @@ function _M:getRulesForType(rule_type)
     cached_rules[rule_type] = {}
     local keys = dict:get_keys()
     local val_string, val, data, domain, expire_at_utc, id, meta, decode_ok
-    local i, format_split_idx
+    local i, domain_split_idx
     for i, key in pairs(keys) do
         val_string, data = dict:get(key)
         if (val_string ~= nil and key ~= "_lastModified") then
-            format_split_idx = key:find(" ")
+            domain_split_idx = key:find(" ")
             decode_ok,  val = pcall(cjson.decode, val_string)
-            if ( decode_ok and val ~= nil and format_split_idx ~= nil ) then
-                id = key:sub(1, format_split_idx - 1)
+            if ( decode_ok and val ~= nil and domain_split_idx ~= nil ) then
+                id = key:sub(1, domain_split_idx - 1)
                 cached_rules[rule_type][i] = {
                     id              = tonumber(id) or id, -- try to convert it to a number, but if it's not keep the string
-                    format          = key:sub(format_split_idx + 1),
-                    domain          = val["domain"],
+                    domain          = key:sub(domain_split_idx + 1),
+                    format          = val["format"],
                     expire_at_utc   = val["expire_at_utc"],
                     action          = string.upper(rule_type),
                     meta            = val["meta"],
                     data            = data
                 }
             else
-                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(dict_name), ", key=", tostring(key), ", val=", tostring(val))
+                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(dict_name), "format=", tostring(format), ", key=", tostring(key), ", val=", tostring(val))
             end
         end
     end
