@@ -96,7 +96,7 @@ local function addSingleRule(rule, json_string)
 
     -- TODO: make sure format doesn't have any spaces at all
     local success, err, forcible = dict:set(rule.id .. " " .. rule.domain, cjson.encode(rule), expire_in, (rule.data or 0) )
-    ngx.log(ngx.WARN, "New blocking rule added at:" .. tostring(ngx.var.msec) .. ", expires in:" .. tostring(expire_in) .. ", Rule:" .. tostring(json_string))
+    ngx.log(ngx.WARN, "New blocking rule added at:" .. tostring(ngx.var.msec) .. ", expires in:" .. tostring(expire_in) .. ", Rule:" .. tostring(cjson.encode(rule)))
     dict:set("_lastModified", now, 0)
     return success, err, forcible
 end
