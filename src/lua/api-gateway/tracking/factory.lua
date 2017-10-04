@@ -37,9 +37,29 @@ local cjson = require "cjson"
 --   POST /tracking
 local function _API_POST_Handler()
     local trackingManager = ngx.apiGateway.tracking.manager
-    ngx.req.read_body()
     if ( ngx.req.get_method() == "POST" ) then
+       ngx.req.read_body()
+
        local json_string = ngx.req.get_body_data()
+
+       -- Check http://openresty-reference.readthedocs.io/en/latest/Lua_Nginx_API/#ngxreqget_body_data for details
+       if (json_string == nil) then
+           ngx.log(ngx.WARN, "ngx.req.get_body_data() returned nil, maybe the request body has been read into disk files; retrying")
+
+           local body_file_name = ngx.req.get_body_file()
+
+           if (body_file_name == nil) then
+               ngx.log(ngx.WARN, "ngx.req.get_body_file() returned nil, maybe the request body has not been read or has been read into memory")
+           else
+               ngx.log(ngx.DEBUG, "ngx.req.get_body_file() returned ", body_file_name)
+
+               local body_file = io.open(body_file_name, "rb")
+
+               json_string = body_file:read("*all")
+               ngx.log(ngx.DEBUG, "Read '", json_string, "' from ", body_file_name)
+           end
+       end
+
        local success, err, forcible = trackingManager:addRule(json_string)
        if ( success ) then
           ngx.say('{"result":"success"}')
