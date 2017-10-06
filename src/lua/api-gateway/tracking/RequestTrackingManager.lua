@@ -30,7 +30,7 @@ local cjson = require "cjson"
 
 local _M = {}
 
-local KNWON_RULES =
+local KNOWN_RULES =
 {
     BLOCK   = "blocking_rules_dict",
     TRACK   = "tracking_rules_dict",
