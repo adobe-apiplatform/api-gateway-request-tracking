@@ -74,12 +74,12 @@ end
 
 local function addSingleRule(rule, json_string)
     local rule_type = string.upper(rule.action)
-    if (KNWON_RULES[rule_type] == nil) then
+    if (KNOWN_RULES[rule_type] == nil) then
         ngx.log(ngx.WARN, "Could not add rule as it doesn't match the known rules. input=" .. tostring(json_string))
         return false
     end
 
-    local dict_name = KNWON_RULES[rule_type]
+    local dict_name = KNOWN_RULES[rule_type]
     local dict = ngx.shared[dict_name]
     if (dict == nil) then
         ngx.log(ngx.WARN, "Shared dictionary not defined. Please define it with 'lua_shared_dict " .. tostring(dict_name) .. " 5m';")
@@ -144,7 +144,7 @@ end
 --
 function _M:getRulesForType(rule_type)
     local rule_type = string.upper(rule_type)
-    local dict_name = KNWON_RULES[rule_type]
+    local dict_name = KNOWN_RULES[rule_type]
     if (dict_name == nil) then
         return {}
     end
