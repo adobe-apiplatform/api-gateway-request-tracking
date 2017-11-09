@@ -37,7 +37,7 @@ local RESPONSES = {
 }
 
 local _M = BaseValidator:new()
-_M["log_identifier"] = "tvt";
+_M["log_identifier"] = "throtteling_validator_execution_time";
 
 ---
 -- @param config_obj configuration object
