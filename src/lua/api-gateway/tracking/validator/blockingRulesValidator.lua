@@ -37,6 +37,7 @@ local RESPONSES = {
 }
 
 local _M = BaseValidator:new()
+_M["log_identifier"] = "tvt";
 
 ---
 -- @param config_obj configuration object

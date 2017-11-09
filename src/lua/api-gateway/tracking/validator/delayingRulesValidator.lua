@@ -25,6 +25,7 @@ local BaseValidator = require "api-gateway.validation.validator"
 
 
 local _M = BaseValidator:new()
+_M["log_identifier"] = "tvt";
 
 ---
 -- value in seconds for the default delay
