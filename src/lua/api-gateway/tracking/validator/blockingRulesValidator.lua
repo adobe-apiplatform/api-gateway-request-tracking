@@ -57,6 +57,7 @@ function _M:validate_blocking_rules(config_obj)
 
     ngx.var.blocked_by = math.floor(tonumber(blocking_rule.id)/100000)
     -- there's one blocking rule matching this request
+    ngx.var.retry_after = blocking_rule.expire_at_utc - ngx.time()
     return RESPONSES.BLOCK_REQUEST.error_code, cjson.encode(RESPONSES.BLOCK_REQUEST)
 end
 
