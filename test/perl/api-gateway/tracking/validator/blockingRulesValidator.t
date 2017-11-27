@@ -24,7 +24,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 13) - 1;
+plan tests => repeat_each() * (blocks() * 13) + 4;
 
 my $pwd = cwd();
 
@@ -76,7 +76,7 @@ __DATA__
         error_log ../test-logs/blockingRequestValidator_test1_error.log debug;
 
         set $validator_custom_error_responses '{
-            "BLOCK_REQUEST" : { "http_status" : 429, "error_code" : 429050, "message" : "{\\"error_code\\":\\"429050\\",\\"message\\":\\"Too many requests\\"}","headers" :  { "content-type" : "application/json" } }
+            "BLOCK_REQUEST" : { "http_status" : 429, "error_code" : 429050, "message" : "{\\"error_code\\":\\"429050\\",\\"message\\":\\"Too many requests\\"}","headers" :  { "content-type" : "application/json", "retry-after": "ngx.var.retry_after" } }
         }';
 
         location ~ /protected-with-blocking-rules/(.*)$ {
@@ -121,6 +121,14 @@ __DATA__
 ',
 'not-blocked
 '
+]
+--- response_headers_like eval
+[
+"content-type: text/plain",
+"content-type: text/plain",
+"retry-after: \\d+",
+"retry-after: \\d+",
+"content-type: text/plain"
 ]
 --- error_code eval
  [200, 200, 429, 429, 200]
