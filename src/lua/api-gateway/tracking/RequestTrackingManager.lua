@@ -332,7 +332,8 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                             format = format,
                             domain = compiled_domain,
                             data = data,
-                            meta = meta
+                            meta = meta,
+                            expire_at_utc = expire_at_utc
                         }
                         if fail_fast == true then
                             return matched_rules[matched_rules_counter]
