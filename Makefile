@@ -75,9 +75,16 @@ post-docker-test:
 
 run-docker-test:
 	echo "   run-docker-test"
-	- cd ./test && docker-compose up --force-recreate
+	- cd ./test && docker-compose pull && docker-compose up --force-recreate
+
+run-docker-test-jenkins:
+	echo "   run-docker-test"
+	- cd ./test && docker-compose -f docker-compose-jenkins.yml pull && docker-compose -f docker-compose-jenkins.yml up -d --force-recreate
 
 test-docker: pre-docker-test get-redis-docker-ip run-docker-test post-docker-test
+	echo "running tests with docker ..."
+
+test-docker-jenkins: pre-docker-test get-redis-docker-ip run-docker-test-jenkins
 	echo "running tests with docker ..."
 
 package:
