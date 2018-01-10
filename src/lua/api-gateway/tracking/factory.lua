@@ -30,6 +30,7 @@ local RequestTrackingManager = require "api-gateway.tracking.RequestTrackingMana
 local RequestVariableManager = require "api-gateway.tracking.RequestVariableManager"
 local BlockingRulesValidator = require "api-gateway.tracking.validator.blockingRulesValidator"
 local DelayingRulesValidator = require "api-gateway.tracking.validator.delayingRulesValidator"
+local TracingRulesLogger     = require "api-gateway.tracking.log.tracingRulesLogger"
 local TrackingRulesLogger    = require "api-gateway.tracking.log.trackingRulesLogger"
 local cjson = require "cjson"
 
@@ -99,8 +100,11 @@ end
 -- This method should be called from the log phase ( log_by_lua )
 --
 local function _trackRequest()
+    local tracingRulesLogger = TracingRulesLogger:new()
+    tracingRulesLogger:log_trace_rules()
+
    local trackingRulesLogger = TrackingRulesLogger:new()
-    return trackingRulesLogger:log()
+   return trackingRulesLogger:log()
 end
 
 return {

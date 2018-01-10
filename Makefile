@@ -15,9 +15,11 @@ all: ;
 install: all
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/log/
+	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/util/
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/validator/
 	$(INSTALL) src/lua/api-gateway/tracking/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/
 	$(INSTALL) src/lua/api-gateway/tracking/log/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/log/
+	$(INSTALL) src/lua/api-gateway/tracking/util/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/util/
 	$(INSTALL) src/lua/api-gateway/tracking/validator/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/tracking/validator/
 
 test: redis

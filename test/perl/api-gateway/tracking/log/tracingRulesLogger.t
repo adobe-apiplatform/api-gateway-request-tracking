@@ -24,7 +24,7 @@ use Cwd qw(cwd);
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 15) ;
+plan tests => repeat_each() * (blocks() * 5) + 1 ;
 
 my $pwd = cwd();
 
@@ -42,29 +42,13 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway.tracking = require "api-gateway.tracking.factory"
 
         local function get_logger(name)
-            return {}
+            return {
+                logMetrics = function (self, key, value)
+                             ngx.log(ngx.INFO, "Received " .. tostring(value))
+                     end
+            }
         end
         ngx.apiGateway.getAsyncLogger = get_logger
-
-        local function loadrequire(module)
-            local function requiref(module)
-                require(module)
-            end
-            local res = pcall(requiref,module)
-            if not(res) then
-                ngx.log(ngx.WARN, "Module ", module, " was not found.")
-                return nil
-            end
-            return require(module)
-        end
-        -- when the ZmqModule is not present the script does not break
-        local ZmqLogger = loadrequire("api-gateway.zmq.ZeroMQLogger")
-
-        if (not ngx.apiGateway.zmqLogger ) and ( ZmqLogger ~= nil ) then
-            ngx.log(ngx.INFO, "Starting new ZmqLogger on pid ", tostring(ngx.worker.pid()), " ...")
-            ngx.apiGateway.zmqLogger = ZmqLogger:new()
-            ngx.apiGateway.zmqLogger:connect(ZmqLogger.SOCKET_TYPE.ZMQ_PUB, "ipc:///tmp/nginx_queue_listen")
-        end
      ';
     include "$pwd/conf.d/http.d/*.conf";
     upstream cache_rw_backend {
@@ -75,6 +59,7 @@ our $HttpConfig = <<_EOC_;
     }
     lua_shared_dict blocking_rules_dict 5m;
     lua_shared_dict tracking_rules_dict 5m;
+    lua_shared_dict tracing_rules_dict 5m;
     lua_shared_dict debugging_rules_dict 5m;
     lua_shared_dict delaying_rules_dict 5m;
     lua_shared_dict retrying_rules_dict 5m;
@@ -91,58 +76,43 @@ run_tests();
 __DATA__
 
 
-=== TEST 1: test that we send the correct message out to the message queue
+=== TEST 1: test that we can trace the request
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/default_validators.conf;
         include ../../api-gateway/tracking_service.conf;
         set $publisher_org_name 'pub1';
 
-        error_log ../test-logs/trackingRulesLogger_test1_error.log debug;
+        error_log ../test-logs/tracingRequestValidator_test1_error.log debug;
 
-        location ~ /t/(.*)$ {
-            set $consumer_org_name $1;
-            set $validate_service_plan "on; path=/validate_service_plan; order=1; ";
+        location /trace {
 
-            access_by_lua "
-                ngx.apiGateway.tracking.track()
-                ngx.apiGateway.validation.validateRequest()
-            ";
-            content_by_lua "ngx.say('not-blocked')";
             log_by_lua '
                 ngx.apiGateway.tracking.track()
             ';
+            content_by_lua 'ngx.say("OK")';
+
         }
+--- timeout: 10
 --- pipelined_requests eval
 ['POST /tracking/
-{
-  "id": 111,
-  "domain" : "*;*;200;*",
-  "format": "$publisher_org_name;$consumer_org_name;$status;$request_method",
+[{
+  "id": 222,
+  "domain" : "pub1",
+  "format": "$publisher_org_name",
   "expire_at_utc": 1583910454,
-  "action" : "TRACK"
-}
+  "action" : "TRACE",
+  "meta" : "$request_uri; $request_method;$publisher_org_name"
+}]
 ',
-"GET /tracking/track",
-"GET /t/org1",
-"POST /t/org2",
-"OPTIONS /t/org1"
+"GET /trace"
 ]
---- response_body eval
+--- response_body_like eval
 [
-'{"result":"success"}
-',
-'[{"domain":"*;*;200;*","format":"$publisher_org_name;$consumer_org_name;$status;$request_method","id":111,"action":"TRACK","expire_at_utc":1583910454}]
-',
-'not-blocked
-',
-'not-blocked
-',
-'not-blocked
-'
+'\{"result":"success"\}.*',
+'OK'
 ]
 --- error_code_like eval
- [200, 200, 200, 200, 200]
+ [200, 200]
 --- no_error_log
 [error]
-

@@ -31,12 +31,16 @@ function _M:getRequestVariable(request_var, cache)
 
     local ctx_var = ngx.ctx[request_var]
     if ctx_var ~= nil then
-        cache[request_var] = ctx_var
+        if cache ~= nil then
+            cache[request_var] = ctx_var
+        end
         return ctx_var
     end
 
     local ngx_var = ngx.var[request_var]
-    cache[request_var] = ngx_var
+    if cache ~= nil then
+        cache[request_var] = ngx_var
+    end
     return ngx_var
 end
 
