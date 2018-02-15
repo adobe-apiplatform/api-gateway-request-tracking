@@ -58,7 +58,7 @@ function _M:validate_rewrite_rules(config_obj)
         return nil
     end
 
-    ngx.var.rewritten_by = math.floor(tonumber(rewrite_rule.id)/100000)
+    ngx.var.rewritten_by = tonumber(rewrite_rule.id)
     local backend = getBackendFromRewriteRule(rewrite_rule)
     return backend
 end
