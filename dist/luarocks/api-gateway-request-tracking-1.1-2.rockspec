@@ -17,7 +17,7 @@ source = {
     tag = "api-gateway-request-tracking-1.1.2"
 }
 description = {
-    summary = "Lua Module providing api-gateway-request-tracking gateway specific scripts.",
+    summary = "Lua Module providing a request tracking framework in the API Gateway.",
     license = "MIT"
 }
 dependencies = {
