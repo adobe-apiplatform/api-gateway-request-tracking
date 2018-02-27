@@ -1,5 +1,5 @@
 package="api-gateway-request-tracking"
-version="1.1-3"
+version="1.1-2"
 local function make_plat(plat)
     return { modules = {
         ["api-gateway.tracking.factory"] = "src/lua/api-gateway/tracking/factory.lua",
@@ -14,7 +14,7 @@ local function make_plat(plat)
 end
 source = {
     url = "https://github.com/adobe-apiplatform/api-gateway-request-tracking.git",
-    tag = "api-gateway-request-tracking-1.1.3"
+    tag = "api-gateway-request-tracking-1.1.2"
 }
 description = {
     summary = "Lua Module providing api-gateway-request-tracking gateway specific scripts.",
