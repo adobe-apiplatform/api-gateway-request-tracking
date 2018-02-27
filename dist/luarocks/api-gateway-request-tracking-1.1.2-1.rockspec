@@ -1,5 +1,5 @@
 package="api-gateway-request-tracking"
-version="1.1-2"
+version="1.1.2-1"
 local function make_plat(plat)
     return { modules = {
         ["api-gateway.tracking.factory"] = "src/lua/api-gateway/tracking/factory.lua",
