@@ -190,7 +190,7 @@ function _M:getRulesForType(rule_type)
                     data            = data
                 }
             else
-                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(dict_name), "format=", tostring(format), ", key=", tostring(key), ", val=", tostring(val))
+                ngx.log(ngx.WARN, "Could not read rule from shared_dict:", tostring(dict_name), "format=", tostring(val["format"]), ", key=", tostring(key), ", val=", tostring(val))
             end
         end
     end
