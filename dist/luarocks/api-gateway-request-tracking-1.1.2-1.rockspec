@@ -13,7 +13,7 @@ local function make_plat(plat)
     } }
 end
 source = {
-    url = "https://github.com/adobe-apiplatform/api-gateway-request-tracking.git",
+    url = "git+https://github.com/adobe-apiplatform/api-gateway-request-tracking.git",
     tag = "api-gateway-request-tracking-1.1.2"
 }
 description = {
@@ -21,7 +21,7 @@ description = {
     license = "MIT"
 }
 dependencies = {
-    "lua > 5.1"
+    "lua >= 5.1"
 }
 build = {
     type = "builtin",
