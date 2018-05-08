@@ -1,7 +1,7 @@
 package = "api-gateway-request-tracking"
 version = "1.1.3-1"
 source = {
-   url = "https://github.com/adobe-apiplatform/api-gateway-request-tracking.git",
+   url = "git+https://github.com/adobe-apiplatform/api-gateway-request-tracking.git",
    tag = "api-gateway-request-tracking-1.1.3"
 }
 description = {
@@ -9,7 +9,7 @@ description = {
    license = "MIT"
 }
 dependencies = {
-   "lua > 5.1"
+   "lua >= 5.1"
 }
 build = {
    type = "builtin",
