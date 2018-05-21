@@ -170,7 +170,7 @@ function _M:getRulesForType(rule_type)
     -- docs: http://wiki.nginx.org/HttpLuaModule#ngx.shared.DICT.get_keys
     -- will return a max of 1024 keys
     cached_rules[rule_type] = {}
-    local keys = dict:get_keys()
+    local keys = dict:get_keys(0)
     local val_string, val, data, domain, expire_at_utc, id, meta, decode_ok
     local i, domain_split_idx
     for i, key in pairs(keys) do
