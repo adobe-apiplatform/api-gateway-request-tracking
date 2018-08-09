@@ -232,6 +232,15 @@ local function matchVarsWithDomains(vars, domains, cache, separator)
         -- ngx.log(ngx.DEBUG, "VAR " , tostring(i))
         local variableManager = ngx.apiGateway.tracking.variableManager
         v = variableManager:getRequestVariable(vars[i], cache)
+
+        if v == nil then
+            v = variableManager:getResponseVariable(vars[i], cache)
+        end
+
+        if v == nil then
+            return false, str
+        end
+
         -- ngx.log(ngx.DEBUG, "VAL=", v)
         d = domains[i]
         -- ngx.log(ngx.DEBUG, "DOMAIN=", d)
@@ -316,7 +325,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                                     ngx.log(ngx.DEBUG, "MATCHED DOMAIN k=", tostring(k), ", v=", tostring(v))
                                 end]]
 
-                local iterator, err = ngx.re.gmatch(format, "\\$(?<vars>\\w+).?", "jo")
+                local iterator, err = ngx.re.gmatch(format, "\\$(?<vars>[_\\-\\w]+).?", "jo")
                 if (not iterator) then
                     ngx.log(ngx.WARN, "Could not extract format variables for : [", tostring(format), "]. Error:", tostring(err), ", match table=", tostring(matched_variables))
                 else
