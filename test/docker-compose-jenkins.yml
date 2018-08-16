@@ -1,0 +1,13 @@
+gateway:
+  image: adobeapiplatform/apigateway
+  links:
+    - redis:redis.docker
+  environment:
+    - TEST_NGINX_PORT=1989
+  volumes:
+    - ~/tmp/apiplatform/api-gateway-request-tracking/src/lua/api-gateway/tracking:/usr/local/api-gateway/lualib/api-gateway/tracking
+    - ~/tmp/apiplatform/api-gateway-request-tracking/test/perl:/tmp/perl
+    - ~/tmp/apiplatform/api-gateway-request-tracking/target/:/t
+  entrypoint: ["prove", "-I/usr/local/test-nginx-0.24/lib", "-I/usr/local/test-nginx-0.24/inc", "-r", "/tmp/perl/"]
+redis:
+  image: redis:2.8
