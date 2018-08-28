@@ -46,24 +46,14 @@ end
 -- @param response_var the name of the variable to look for
 -- @param cache table used for local caching of variables
 function _M:getResponseVariable(response_var, cache)
-    -- read it first from the local cache table
     if cache ~= nil and cache[response_var] ~= nil then
         return cache[response_var]
     end
 
-    -- TODO: Should all headers be read or only a predefined list?
-    local headers, err = ngx.resp.get_headers()
-
-    if err ~= nil then
-        ngx.log(ngx.ERR, "Response headers could not be read")
-        return nil
-    end
-
-    for k, v in pairs(headers) do
-        if k == response_var then
-            cache[response_var] = v
-            return v
-        end
+    local ngx_header = ngx.header[response_var]
+    if ngx_header ~= nil then
+        cache[response_var] = ngx_header
+        return ngx_header
     end
 
     local response_status = tostring(ngx.status)
