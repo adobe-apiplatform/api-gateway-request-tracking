@@ -27,7 +27,7 @@
 --
 
 local RequestTrackingManager = require "api-gateway.tracking.RequestTrackingManager"
-local RequestVariableManager = require "api-gateway.tracking.RequestVariableManager"
+local VariableManager = require "api-gateway.tracking.VariableManager"
 local BlockingRulesValidator = require "api-gateway.tracking.validator.blockingRulesValidator"
 local DelayingRulesValidator = require "api-gateway.tracking.validator.delayingRulesValidator"
 local TrackingRulesLogger    = require "api-gateway.tracking.log.trackingRulesLogger"
@@ -105,7 +105,7 @@ end
 
 return {
     manager = RequestTrackingManager:new(),
-    variableManager = RequestVariableManager,
+    variableManager = VariableManager,
     validateServicePlan = _validateServicePlan,
     track = _trackRequest,
     POST_HANDLER = _API_POST_Handler,
