@@ -233,8 +233,8 @@ local function matchVarsWithDomains(vars, domains, cache, separator)
         local variableManager = ngx.apiGateway.tracking.variableManager
         v = variableManager:getRequestVariable(vars[i], cache)
 
-        local enable_throttling_using_response_vars = (ngx.var.enable_throttling_using_response_vars == "true")
-        if v == nil and enable_throttling_using_response_vars == true then
+        local enable_upstream_throttling = (ngx.var.enable_upstream_throttling == "true")
+        if v == nil and enable_upstream_throttling == true then
             v = variableManager:getResponseVariable(vars[i], cache)
         end
 
