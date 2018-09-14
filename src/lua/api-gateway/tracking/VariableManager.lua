@@ -41,19 +41,13 @@ function _M:getRequestVariable(request_var, cache)
     return ngx_var
 end
 
---- Returns the value of the variable by looking first into cache table, the into response headers and response status.
+--- Returns the value of the variable by looking first into cache table, the into response status.
 -- An optional cache table may be provided to look first in the cache
 -- @param response_var the name of the variable to look for
 -- @param cache table used for local caching of variables
 function _M:getResponseVariable(response_var, cache)
     if cache ~= nil and cache[response_var] ~= nil then
         return cache[response_var]
-    end
-
-    local ngx_header = ngx.header[response_var]
-    if ngx_header ~= nil then
-        cache[response_var] = ngx_header
-        return ngx_header
     end
 
     local response_status = tostring(ngx.status)
