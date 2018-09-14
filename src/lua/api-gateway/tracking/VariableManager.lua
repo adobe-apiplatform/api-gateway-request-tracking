@@ -41,7 +41,7 @@ function _M:getRequestVariable(request_var, cache)
     return ngx_var
 end
 
---- Returns the value of the variable by looking first into cache table, the into response status.
+--- Returns the value of the variable by looking first into cache table, then into response status.
 -- An optional cache table may be provided to look first in the cache
 -- @param response_var the name of the variable to look for
 -- @param cache table used for local caching of variables
