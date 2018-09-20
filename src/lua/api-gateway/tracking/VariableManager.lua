@@ -41,7 +41,7 @@ function _M:getRequestVariable(request_var, cache)
     return ngx_var
 end
 
---- Returns the value of the variable by looking first into cache table, then into response status.
+--- Returns the value of the variable by looking first into cache table, then into upstream status.
 -- An optional cache table may be provided to look first in the cache
 -- @param response_var the name of the variable to look for
 -- @param cache table used for local caching of variables
@@ -50,10 +50,10 @@ function _M:getResponseVariable(response_var, cache)
         return cache[response_var]
     end
 
-    local response_status = tostring(ngx.status)
-    if response_var == UPSTREAM_STATUS_VARIABLE_NAME and response_status ~= nil then
-        cache[response_var] = response_status
-        return response_status
+    local upstream_status = tostring(ngx.status)
+    if response_var == UPSTREAM_STATUS_VARIABLE_NAME and upstream_status ~= nil then
+        cache[response_var] = upstream_status
+        return upstream_status
     end
 
     return nil
