@@ -16,7 +16,7 @@
 
     <groupId>com.adobe.api.gateway</groupId>
     <artifactId>api-gateway-request-tracking</artifactId>
-    <version>1.1.7</version>
+    <version>1.1.8-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
