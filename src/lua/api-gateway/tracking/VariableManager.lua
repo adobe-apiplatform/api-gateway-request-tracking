@@ -17,7 +17,7 @@
 --
 
 local _M = {}
-local UPSTREAM_STATUS_VARIABLE_NAME = "upstream_status"
+local UPSTREAM_RESPONSE_STATUS_VARIABLE_NAME = "upstream_response_status"
 
 --- Returns the value of the variable by looking first into cache table, the into the ngx.ctx scope and then into ngx.var scope.
 -- An optional cache table may be provided to look first in the cache
@@ -50,10 +50,10 @@ function _M:getResponseVariable(response_var, cache)
         return cache[response_var]
     end
 
-    local upstream_status = tostring(ngx.status)
-    if response_var == UPSTREAM_STATUS_VARIABLE_NAME and upstream_status ~= nil then
-        cache[response_var] = upstream_status
-        return upstream_status
+    local upstream_response_status = tostring(ngx.status)
+    if response_var == UPSTREAM_RESPONSE_STATUS_VARIABLE_NAME and upstream_response_status ~= nil then
+        cache[response_var] = upstream_response_status
+        return upstream_response_status
     end
 
     return nil
