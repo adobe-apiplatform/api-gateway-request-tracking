@@ -50,14 +50,17 @@ function _M:validate_blocking_rules(config_obj)
     end
     -- 1. read the keys in the shared dict and compare it with the current request
     local stop_at_first_block_match = true
+
     local blocking_rule = trackingManager:getMatchingRulesForRequest("block",";", stop_at_first_block_match)
     if blocking_rule == nil then -- there's nothing to block so let this request move on
+        ngx.log(ngx.DEBUG, "Request is not blocked by any rule")
         return ngx.HTTP_OK, ""
     end
 
     ngx.var.blocked_by = math.floor(tonumber(blocking_rule.id)/100000)
     -- there's one blocking rule matching this request
     ngx.var.retry_after = blocking_rule.expire_at_utc - ngx.time()
+    ngx.log(ngx.DEBUG, "Request was blocked by rule id=", blocking_rule.id)
     return RESPONSES.BLOCK_REQUEST.error_code, cjson.encode(RESPONSES.BLOCK_REQUEST)
 end
 

@@ -292,7 +292,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
         fail_fast = false
     end
 
-    ngx.log(ngx.DEBUG, "Getting matching rules for:", rule_type, ", separator=", format_separator, " exit_on_first_match=", tostring(fail_fast))
+    ngx.log(ngx.DEBUG, "Getting matching ", rule_type ," rules for:", rule_type, ", separator=", format_separator, " exit_on_first_match=", tostring(fail_fast))
     local active_rules = self:getRulesForType(rule_type)
 
     local format, domain, expire_at_utc, action, id, data, meta, match_success, compiled_domain
@@ -300,7 +300,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
     local matched_rules_counter = 0
     local matched_rules = {}
     for i, rule in pairs(active_rules) do
-        ngx.log(ngx.DEBUG, "... probing rule id=", tostring(rule.id) )
+        ngx.log(ngx.DEBUG, "... probing ", rule_type ," rule id=", tostring(rule.id) )
         matched_variables = {}
         id = rule.id
         format = rule.format
@@ -309,7 +309,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
         meta   = rule.meta
         expire_at_utc = rule.expire_at_utc
         data = rule.data
-        ngx.log(ngx.DEBUG, "... matching format=", tostring(format), " with domain=", tostring(domain), " id=", tostring(id))
+        ngx.log(ngx.DEBUG, "... matching format=", tostring(format), " with domain=", tostring(domain), " for ", rule_type ," rule id=", tostring(id))
         if (format ~= nil and domain ~= nil and action ~= nil and expire_at_utc ~= nil and id ~= nil) then
             -- j - enable PCRE JIT compilation
             -- o - compile once
@@ -335,7 +335,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                     end]]
                     match_success, compiled_domain = matchVarsWithDomains(matched_variables, matched_domains, var_cache, format_separator)
                     if (match_success == true) then
-                        ngx.log(ngx.DEBUG, "Found a matching rule for id=", tostring(id), ", at i=", tostring(i), " compiled_domain=", tostring(compiled_domain))
+                        ngx.log(ngx.DEBUG, "Found a ", rule_type ," matching rule for id=", tostring(id), ", at i=", tostring(i), " compiled_domain=", tostring(compiled_domain))
                         matched_rules_counter = matched_rules_counter + 1
                         matched_rules[matched_rules_counter] = {
                             id = id,
@@ -349,7 +349,7 @@ function _M:getMatchingRulesForRequest(rule_type, separator, exit_on_first_match
                             return matched_rules[matched_rules_counter]
                         end
                     end
-                    ngx.log(ngx.DEBUG, "... rule doesn't match. id=", tostring(rule.id))
+                    ngx.log(ngx.DEBUG, "...", rule_type, " rule doesn't match. id=", tostring(rule.id))
                 end
             end
         end

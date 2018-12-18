@@ -65,11 +65,13 @@ function _M:log()
     local stop_at_first_block_match = false
     local tracking_rules = trackingManager:getMatchingRulesForRequest("track", ";", stop_at_first_block_match)
     if (tracking_rules == nil) then
+        ngx.log(ngx.DEBUG, "Request is not tracked by any rule")
         return
     end
     -- 2. for each tracking rule matching the request publish a ZMQ message asyncronously
     for i, rule in pairs(tracking_rules) do
         if ( rule ~= nil ) then
+            ngx.log(ngx.DEBUG, "Request was tracked by rule id=", rule.id)
             self:sendMessage(self:getZMQMessage(rule))
         end
     end
